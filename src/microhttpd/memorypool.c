@@ -24,6 +24,7 @@
  * @author Christian Grothoff
  * @author Karlson2k (Evgeny Grin)
  */
+#include <stdio.h>
 #include "memorypool.h"
 #include <stdlib.h>
 #include <string.h>
@@ -177,6 +178,8 @@ MHD_pool_create (size_t max)
   if (MAP_FAILED == pool->memory)
     {
       alloc_size = ROUND_TO_ALIGN(max);
+      fprintf(stderr, "%lu\n", (unsigned long) alloc_size);
+      fprintf(stderr, "%lu\n", (unsigned long) max);
       pool->memory = malloc (alloc_size);
       if (NULL == pool->memory)
         {

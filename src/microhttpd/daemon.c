@@ -2482,6 +2482,7 @@ internal_add_connection (struct MHD_Daemon *daemon,
       errno = eno;
       return MHD_NO;
     }
+  fprintf(stderr, "%lu\n", (unsigned long) daemon->pool_size);
   connection->pool = MHD_pool_create (daemon->pool_size);
   if (NULL == connection->pool)
     {
@@ -5728,6 +5729,7 @@ MHD_start_daemon_va (unsigned int flags,
   daemon->connections = 0;
   daemon->connection_limit = MHD_MAX_CONNECTIONS_DEFAULT;
   daemon->pool_size = MHD_POOL_SIZE_DEFAULT;
+  fprintf(stderr, "%lu\n", (unsigned long) daemon->pool_size);
   daemon->pool_increment = MHD_BUF_INC_SIZE;
   daemon->unescape_callback = &unescape_wrapper;
   daemon->connection_timeout = 0;       /* no timeout */
