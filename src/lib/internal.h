@@ -37,13 +37,6 @@
 #include "mhd_mono_clock.h"
 #include "memorypool.h"
 
-#ifdef HTTPS_SUPPORT
-#include <gnutls/gnutls.h>
-#if GNUTLS_VERSION_MAJOR >= 3
-#include <gnutls/abstract.h>
-#endif
-#endif /* HTTPS_SUPPORT */
-
 #ifdef HAVE_STDBOOL_H
 #include <stdbool.h>
 #endif

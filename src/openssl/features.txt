@@ -1,51 +1,70 @@
-12 résultats - Fichiers 9
-
-lib/internal.h:
-  41: #include <gnutls/gnutls.h>
-  43: #include <gnutls/abstract.h>
-
 microhttpd/connection_https.c:
-  36  #include "mhd_mono_clock.h"
   37: #include <gnutls/gnutls.h>
-  38  #include "mhd_send.h"
+    -> gnutls_record_recv(...)
+    -> GNUTLS_E_AGAIN
+    -> GNUTLS_E_INTERRUPTED
+    -> GNUTLS_E_DECRYPTION_FAILED
+    -> GNUTLS_E_INVALID_SESSION
+    -> GNUTLS_E_DECOMPRESSION_FAILED
+    -> GNUTLS_E_RECEIVED_ILLEGAL_PARAMETER
+    -> GNUTLS_E_UNSUPPORTED_VERSION_PACKET
+    -> GNUTLS_E_UNEXPECTED_PACKET_LENGTH
+    -> GNUTLS_E_UNEXPECTED_PACKET
+    -> GNUTLS_E_UNEXPECTED_HANDSHAKE_PACKET
+    -> GNUTLS_E_EXPIRED
+    -> GNUTLS_E_REHANDSHAKE
+    -> GNUTLS_E_PULL_ERROR
+    -> GNUTLS_E_INTERNAL_ERROR
+    -> GNUTLS_E_CRYPTODEV_IOCTL_ERROR
+    -> GNUTLS_E_CRYPTODEV_DEVICE_ERROR
+    -> GNUTLS_E_PREMATURE_TERMINATION
+    -> GNUTLS_E_UNEXPECTED_PACKET_LENGTH
+    -> gnutls_record_check_pending(...)
+    -> gnutls_handshake(...)
+    -> GNUTLS_E_SUCCESS
+    -> gnutls_bye(...)
+    -> GNUTLS_SHUT_WR 
+
 
 microhttpd/internal.h:
-  37  #ifdef HTTPS_SUPPORT
   38: #include <gnutls/gnutls.h>
-  39  #if GNUTLS_VERSION_MAJOR >= 3
+    -> type gnutls_session_t
+    -> type gnutls_priority_t
+    -> type gnutls_credentials_type_t
+    -> type gnutls_certificate_credentials_t
+    -> type gnutls_dh_params_t
+    -> type gnutls_psk_server_credentials_t
+    -> type gnutls_certificate_retrieve_function2
+    -> type gnutls_certificate_retrieve_function3
+    -> type gnutls_dh_params_t
   40: #include <gnutls/abstract.h>
-  41  #endif
+  
 
 microhttpd/md5_ext.c:
-  25  
   26: #include <gnutls/crypto.h>
-  27  #include "md5_ext.h"
+    -> gnutls_hash_init(...)
+    -> gnutls_free(...)
+    -> gnutls_hash(...)
+    -> gnutls_hash_output(...)
+    -> gnutls_hash_deinit(...)
 
 microhttpd/sha256_ext.c:
-  25  
   26: #include <gnutls/crypto.h>
-  27  #include "sha256_ext.h"
+    -> gnutls_hash_init(...)
+    -> gnutls_free(...)
+    -> gnutls_hash(...)
+    -> gnutls_hash_output(...)
+    -> gnutls_hash_deinit(...)
 
 microhttpd/test_upgrade_large.c:
-  50  #ifdef HTTPS_SUPPORT
   51: #include <gnutls/gnutls.h>
-  52  #include "../testcurl/https/tls_test_keys.h"
 
 microhttpd/test_upgrade.c:
-  53  #ifdef HTTPS_SUPPORT
   54: #include <gnutls/gnutls.h>
-  55  #include "../testcurl/https/tls_test_keys.h"
 
 testcurl/https/test_https_sni.c:
-  36  #include "tls_test_common.h"
   37: #include <gnutls/gnutls.h>
-  38  
-
-  41  
-  42: #include <gnutls/abstract.h>
-  43  
+  42: #include <gnutls/abstract.h> 
 
 testcurl/https/tls_test_common.h:
-  29  #include <limits.h>
   30: #include <gnutls/gnutls.h>
-  31  
