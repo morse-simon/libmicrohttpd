@@ -116,7 +116,7 @@ libmicrohttpd_la_LDFLAGS = \
   -export-dynamic -no-undefined \
   -version-info @LIB_VERSION_CURRENT@:@LIB_VERSION_REVISION@:@LIB_VERSION_AGE@
 libmicrohttpd_la_LIBADD = \
-  $(MHD_LIBDEPS) $(MHD_TLS_LIBDEPS)
+  $(MHD_LIBDEPS) $(MHD_TLS_LIBDEPS) -lcrypto
 
 
 if HAVE_W32

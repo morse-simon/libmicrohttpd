@@ -58,12 +58,61 @@ microhttpd/sha256_ext.c:
 
 microhttpd/test_upgrade_large.c:
   51: #include <gnutls/gnutls.h>
+    -> gnutlscli_connect(...)
+    -> command gnutls-cli
+    -> type gnutls_certificate_credentials_t
+    -> type gnutls_session_t
+    -> GNUTLS_E_SUCCESS
+    -> GNUTLS_CLIENT
+    -> gnutls_set_default_priority(...)
+    -> gnutls_certificate_allocate_credentials(...)
+    -> gnutls_credentials_set(...)
+    -> GNUTLS_CRD_CERTIFICATE
+    -> GNUTLS_VERSION_NUMBER
+    -> gnutls_transport_set_int(...)
+    -> gnutls_transport_set_ptr(...)
+    -> type gnutls_transport_ptr_t
+    -> gnutls_certificate_free_credentials(...)
+    -> gnutls_deinit(...)
+    -> gnutls_handshake(...)
+    -> GNUTLS_E_AGAIN
+    -> gnutls_record_send(...)
+    -> gnutls_record_recv(...)
+    -> gnutlscli_connect(...)
+    -> parameter "--use-gnutls-cli"
+    -> parameter "--use-gnutls-lib"
+    -> gnutls_global_init(...)
+    -> gnutls_global_deinit(...)
+
 
 microhttpd/test_upgrade.c:
   54: #include <gnutls/gnutls.h>
+    -> same as test_upgrade_large.c
 
 testcurl/https/test_https_sni.c:
   37: #include <gnutls/gnutls.h>
+    -> type gnutls_pcert_st
+    -> type gnutls_privkey_t
+    -> type gnutls_datum_t
+    -> gnutls_load_file(...)
+    -> gnutls_pcert_import_x509_raw
+    -> gnutls_strerror(...)
+    -> gnutls_free(...)
+    -> gnutls_load_file(...)
+    -> gnutls_privkey_init(...)
+    -> gnutls_privkey_import_x509_raw(...)
+    -> GNUTLS_X509_FMT_PEM
+    -> gnutls_strerror(...)
+    -> gnutls_free(...)
+    -> type gnutls_session_t
+    -> type gnutls_datum_t
+    -> type gnutls_pk_algorithm_t
+    -> type gnutls_pcert_st
+    -> type gnutls_privkey_t
+    -> GNUTLS_E_SUCCESS
+    -> gnutls_server_name_get(...)
+    -> curl_tls_is_gnutls(...)
+
   42: #include <gnutls/abstract.h> 
 
 testcurl/https/tls_test_common.h:
