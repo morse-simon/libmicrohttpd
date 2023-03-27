@@ -19,28 +19,39 @@
 
 /**
  * @file microhttpd/md5_ext.h
- * @brief  Wrapper for MD5 calculation performed by TLS library
- * @author Karlson2k (Evgeny Grin)
- * @author Edouard LEFIZELIER
+ * @brief  Wrapper declarations for MD5 calculation performed by TLS library
+ * @author Édouard LEFIZELIER
  */
 
-#include <openssl/crypto.h>
-#include "md5_ext_openssl.h"
-#include "mhd_assert.h"
+#ifndef MHD_MD5_EXT_OPENSSL_H
+#define MHD_MD5_EXT_OPENSSL_H 1
 
+
+/*
+MD5 calcul return
+*/
+
+struct Md5CtxExt_OpenSSL
+{
+  unsigned char *hash; /** Data's hash calculated */
+  int ext_error; /** Non-zero if external error occurs during init or hashing */
+};
+
+
+/**
+ * Indicates that MHD_MD5() function is present.
+ */
+#define MHD_MD5 1
+
+
+/**
+ * Calculate MD5 hash of the data.
+ *
+ * @param c the informations about the hash return
+ * @param d the data to hash
+ * @param n the length of the data
+ */
 void
 MHD_MD5 (struct Md5CtxExt_OpenSSL *c,
          const unsigned char *d,
          size_t n)
-{
-  unsigned char *md;
-  if (NULL == MD5 (d, n, md))
-  {
-    c->ext_error = 1;
-  }
-  else
-  {
-    c->ext_error = 0;
-    memcpy (c->hash, md, sizeof(ctx->H));
-  }
-}
