@@ -23,35 +23,37 @@
  * @author Édouard LEFIZELIER
  */
 
-#ifndef MHD_MD5_EXT_OPENSSL_H
-#define MHD_MD5_EXT_OPENSSL_H 1
+#ifndef MHD_MD5_EXT_OPENSSL
+#define MHD_MD5_EXT_OPENSSL 1
 
-
-/*
-MD5 calcul return
-*/
-
-struct Md5CtxExt_OpenSSL
-{
-  unsigned char *hash; /** Data's hash calculated */
-  int ext_error; /** Non-zero if external error occurs during init or hashing */
-};
-
+#include <openssl/crypto.h>
 
 /**
- * Indicates that MHD_MD5() function is present.
- */
-#define MHD_MD5 1
-
-
-/**
- * Calculate MD5 hash of the data.
+ * Initialise structure for MD5 calculation
  *
- * @param c the informations about the hash return
- * @param d the data to hash
- * @param n the length of the data
+ * @param ctx the calculation context
+*/
+void
+MHD_MD5_init (struct Md5CtxExt *ctx);
+
+/**
+ * Process portion of bytes.
+ *
+ * @param ctx the calculation context
+ * @param data bytes to add to hash
+ * @param length number of bytes in @a data
+*/
+void
+MHD_MD5_update (struct Md5CtxExt *ctx, const void *buf, int len);
+
+/**
+ * Finalise MD5 calculation, return digest.
+ *
+ * @param ctx the calculation context
+ * @param[out] digest set to the hash, must be #MD5_DIGEST_SIZE bytes
  */
 void
-MHD_MD5 (struct Md5CtxExt_OpenSSL *c,
-         const unsigned char *d,
-         size_t n)
+MHD_MD5_final (struct Md5CtxExt *ctx, unsigned char *md);
+
+
+#endif

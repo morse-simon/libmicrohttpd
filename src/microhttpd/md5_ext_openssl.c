@@ -29,18 +29,21 @@
 #include "mhd_assert.h"
 
 void
-MHD_MD5 (struct Md5CtxExt_OpenSSL *c,
-         const unsigned char *d,
-         size_t n)
+MHD_MD5_init (struct Md5CtxExt *ctx)
 {
-  unsigned char *md;
-  if (NULL == MD5 (d, n, md))
-  {
-    c->ext_error = 1;
-  }
-  else
-  {
-    c->ext_error = 0;
-    memcpy (c->hash, md, sizeof(ctx->H));
-  }
+  MD5_init (*ctx);
+}
+
+
+void
+MHD_MD5_update (struct Md5CtxExt *ctx, const void *buf, int len)
+{
+  MD5_update (*ctx, *buf, len);
+}
+
+
+void
+MHD_MD5_final (struct Md5CtxExt *ctx, unsigned char *md)
+{
+  MD5_final (md, *ctx);
 }
