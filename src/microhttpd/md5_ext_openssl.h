@@ -29,12 +29,21 @@
 #include <openssl/crypto.h>
 
 /**
+ * MD5 calculation context
+ */
+struct Md5CtxExt_openssl
+{
+  MD5_CTX c; /* Hash context*/
+  int ext_error; /**< Non-zero if external error occurs during init or hashing */
+};
+
+/**
  * Initialise structure for MD5 calculation
  *
  * @param ctx the calculation context
 */
 void
-MHD_MD5_init (struct Md5CtxExt *ctx);
+MHD_MD5_init (struct Md5CtxExt_openssl *ctx);
 
 /**
  * Process portion of bytes.
@@ -44,7 +53,7 @@ MHD_MD5_init (struct Md5CtxExt *ctx);
  * @param length number of bytes in @a data
 */
 void
-MHD_MD5_update (struct Md5CtxExt *ctx, const void *buf, int len);
+MHD_MD5_update (struct Md5CtxExt_openssl *ctx, const void *buf, int len);
 
 /**
  * Finalise MD5 calculation, return digest.
@@ -53,7 +62,7 @@ MHD_MD5_update (struct Md5CtxExt *ctx, const void *buf, int len);
  * @param[out] digest set to the hash, must be #MD5_DIGEST_SIZE bytes
  */
 void
-MHD_MD5_final (struct Md5CtxExt *ctx, unsigned char *md);
+MHD_MD5_final (struct Md5CtxExt_openssl *ctx, unsigned char *md);
 
 
 #endif
