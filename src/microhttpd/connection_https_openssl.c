@@ -63,7 +63,7 @@ create_context ()
  * @param path the path and the filename of the trust store file
 */
 void
-set_context (SSL_CTX *ctx, char *path)
+set_context (SSL_CTX *ctx, const char *path)
 {
   if (! SSL_CTX_load_verify_locations (ctx, path, NULL))
   {
@@ -80,46 +80,26 @@ set_context (SSL_CTX *ctx, char *path)
  * @return 1 if an error occured, 0 otherwise
 */
 int
-create_secure_connection (BIO *bio, const char *path)
+create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port)
 {
-  SSL_CTX *ctx = SSL_CTX_new (SSLv23_client_method ());
+  BIO *bio = BIO_new_ssl_connect (ctx);
   SSL ssl;
-
-  // Load the client certificate into the SSL_CTX structure
-  if (! SSL_CTX_load_verify_locations (ctx, path, NULL))
-  {
-    // Error Handler
-  }
-
-  bio = BIO_new_ssl_connect (ctx);
+  int res;
   BIO_get_ssl (bio, &ssl);
-  // if the server want a new handshake, OpenSSL will open it in the background
+
+  // To prevent some failure when not receiving non-application data
   SSL_set_mode (ssl, SSL_MODE_AUTO_RETRY);
-}
 
+  BIO_set_conn_hostname (bio, hostnname);
+  res = BIO_do_connect (bio);
 
-/**
- * Open a secure connection with the server
- *
- * @param bio the BIO structure
- * @param port the port to connect to
- * @return 1 if an error occured, 0 otherwise
-*/
-int
-open_secure_connection (BIO *bio, const char *port)
-{
-  BIO_set_conn_hostname (bio, port);
-  if (BIO_do_connect (bio) <= 0)
-  {
-    return 1;
-  }
-  SSL ssl;
-  BIO_get_ssl (bio, &ssl);
+  // Verify the certificate
   if (SSL_get_verify_result (ssl) != X509_V_OK)
   {
-    return 1;
+    ERR_print_errors_fp (stderr);
+    close_connection (bio);
   }
-  ;
+
   return 0;
 }
 
