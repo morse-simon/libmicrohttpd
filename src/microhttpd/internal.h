@@ -1195,7 +1195,7 @@ union TLS_ConnectionState
   } gnutls;
 #endif
 
-#if 1 || TLS_SUPPORT_OPENSSL
+#if TLS_SUPPORT_OPENSSL
   struct
   {
     // ...
@@ -1204,6 +1204,108 @@ union TLS_ConnectionState
 #endif
 
 };
+
+union TLS_DaemonState
+{
+  #if 1 || TLS_SUPPORT_GNUTLS
+  struct
+  {
+    /**
+     * Desired cipher algorithms.
+     */
+    gnutls_priority_t priority_cache;
+
+    /**
+     * What kind of credentials are we offering
+     * for SSL/TLS?
+     */
+    gnutls_credentials_type_t cred_type;
+
+    /**
+     * Server x509 credentials
+     */
+    gnutls_certificate_credentials_t x509_cred;
+
+    /**
+     * Diffie-Hellman parameters
+     */
+    gnutls_dh_params_t dh_params;
+
+    /**
+     * Server PSK credentials
+     */
+    gnutls_psk_server_credentials_t psk_cred;
+
+  #if GNUTLS_VERSION_MAJOR >= 3
+    /**
+     * Function that can be used to obtain the certificate.  Needed
+     * for SNI support.  See #MHD_OPTION_HTTPS_CERT_CALLBACK.
+     */
+    gnutls_certificate_retrieve_function2 *cert_callback;
+
+    /**
+     * Function that can be used to obtain the shared key.
+     */
+    MHD_PskServerCredentialsCallback cred_callback;
+
+    /**
+     * Closure for @e cred_callback.
+     */
+    void *cred_callback_cls;
+  #endif
+
+  #if GNUTLS_VERSION_NUMBER >= 0x030603
+    /**
+     * Function that can be used to obtain the certificate.  Needed
+     * for OCSP stapling support.  See #MHD_OPTION_HTTPS_CERT_CALLBACK2.
+     */
+    gnutls_certificate_retrieve_function3 *cert_callback2;
+  #endif
+
+    /**
+     * Pointer to our SSL/TLS key (in ASCII) in memory.
+     */
+    const char *https_mem_key;
+
+    /**
+     * Pointer to our SSL/TLS certificate (in ASCII) in memory.
+     */
+    const char *https_mem_cert;
+
+    /**
+     * Pointer to 0-terminated HTTPS passphrase in memory.
+     */
+    const char *https_key_password;
+
+    /**
+     * Pointer to our SSL/TLS certificate authority (in ASCII) in memory.
+     */
+    const char *https_mem_trust;
+
+    /**
+     * Our Diffie-Hellman parameters in memory.
+     */
+    gnutls_dh_params_t https_mem_dhparams;
+
+    /**
+     * true if we have initialized @e https_mem_dhparams.
+     */
+    bool have_dhparams;
+
+    /**
+     * true if ALPN is disabled.
+     */
+    bool disable_alpn;
+  } gnutls;
+  #endif
+
+  #if TLS_SUPPORT_OPENSSL
+  struct
+  {
+    // ...
+  } openssl;
+  #endif
+}
 #endif
 
 /**
@@ -2163,94 +2265,9 @@ struct MHD_Daemon
   struct MHD_UpgradeResponseHandle *urh_tail;
 #endif /* UPGRADE_SUPPORT */
 
-  /**
-   * Desired cipher algorithms.
-   */
-  gnutls_priority_t priority_cache;
+  union TLS_DaemonState tls_damonsState;
 
-  /**
-   * What kind of credentials are we offering
-   * for SSL/TLS?
-   */
-  gnutls_credentials_type_t cred_type;
-
-  /**
-   * Server x509 credentials
-   */
-  gnutls_certificate_credentials_t x509_cred;
-
-  /**
-   * Diffie-Hellman parameters
-   */
-  gnutls_dh_params_t dh_params;
-
-  /**
-   * Server PSK credentials
-   */
-  gnutls_psk_server_credentials_t psk_cred;
-
-#if GNUTLS_VERSION_MAJOR >= 3
-  /**
-   * Function that can be used to obtain the certificate.  Needed
-   * for SNI support.  See #MHD_OPTION_HTTPS_CERT_CALLBACK.
-   */
-  gnutls_certificate_retrieve_function2 *cert_callback;
-
-  /**
-   * Function that can be used to obtain the shared key.
-   */
-  MHD_PskServerCredentialsCallback cred_callback;
-
-  /**
-   * Closure for @e cred_callback.
-   */
-  void *cred_callback_cls;
-#endif
-
-#if GNUTLS_VERSION_NUMBER >= 0x030603
-  /**
-   * Function that can be used to obtain the certificate.  Needed
-   * for OCSP stapling support.  See #MHD_OPTION_HTTPS_CERT_CALLBACK2.
-   */
-  gnutls_certificate_retrieve_function3 *cert_callback2;
-#endif
-
-  /**
-   * Pointer to our SSL/TLS key (in ASCII) in memory.
-   */
-  const char *https_mem_key;
-
-  /**
-   * Pointer to our SSL/TLS certificate (in ASCII) in memory.
-   */
-  const char *https_mem_cert;
-
-  /**
-   * Pointer to 0-terminated HTTPS passphrase in memory.
-   */
-  const char *https_key_password;
-
-  /**
-   * Pointer to our SSL/TLS certificate authority (in ASCII) in memory.
-   */
-  const char *https_mem_trust;
-
-  /**
-   * Our Diffie-Hellman parameters in memory.
-   */
-  gnutls_dh_params_t https_mem_dhparams;
-
-  /**
-   * true if we have initialized @e https_mem_dhparams.
-   */
-  bool have_dhparams;
-
-  /**
-   * true if ALPN is disabled.
-   */
-  bool disable_alpn;
-
-  #endif /* HTTPS_SUPPORT */
+#endif /* HTTPS_SUPPORT */
 
 #ifdef DAUTH_SUPPORT
 

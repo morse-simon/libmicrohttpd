@@ -57,7 +57,7 @@ recv_tls_adapter (struct MHD_Connection *connection,
   if (i > SSIZE_MAX)
     i = SSIZE_MAX;
 
-  res = gnutls_record_recv (connection->tls_session,
+  res = gnutls_record_recv (connection->tls.gnutls.tls_session,
                             other,
                             i);
   if ( (GNUTLS_E_AGAIN == res) ||
@@ -113,7 +113,7 @@ recv_tls_adapter (struct MHD_Connection *connection,
   /* Check whether TLS buffers still have some unread data. */
   connection->tls_read_ready =
     ( ((size_t) res == i) &&
-      (0 != gnutls_record_check_pending (connection->tls_session)) );
+      (0 != gnutls_record_check_pending (connection->tls.gnutls.tls_session)) );
   return res;
 }
 
@@ -132,8 +132,8 @@ MHD_run_tls_handshake_ (struct MHD_Connection *connection)
 {
   int ret;
 
-  if ((MHD_TLS_CONN_INIT == connection->tls_state) ||
-      (MHD_TLS_CONN_HANDSHAKING == connection->tls_state))
+  if ((MHD_TLS_CONN_INIT == connection->tls.gnutls.tls_session) ||
+      (MHD_TLS_CONN_HANDSHAKING == connection->tls.gnutls.tls_state))
   {
 #if 0
     /* According to real-live testing, Nagel's Algorithm is not blocking
@@ -145,23 +145,23 @@ MHD_run_tls_handshake_ (struct MHD_Connection *connection)
     if (_MHD_ON != connection->sk_nodelay)
       MHD_connection_set_nodelay_state_ (connection, true);
 #endif
-    ret = gnutls_handshake (connection->tls_session);
+    ret = gnutls_handshake (connection->tls.gnutls.tls_state);
     if (ret == GNUTLS_E_SUCCESS)
     {
       /* set connection TLS state to enable HTTP processing */
-      connection->tls_state = MHD_TLS_CONN_CONNECTED;
+      connection->tls.gnutls.tls_state = MHD_TLS_CONN_CONNECTED;
       MHD_update_last_activity_ (connection);
       return true;
     }
     if ( (GNUTLS_E_AGAIN == ret) ||
          (GNUTLS_E_INTERRUPTED == ret) )
     {
-      connection->tls_state = MHD_TLS_CONN_HANDSHAKING;
+      connection->tls.gnutls.tls_state = MHD_TLS_CONN_HANDSHAKING;
       /* handshake not done */
       return false;
     }
     /* handshake failed */
-    connection->tls_state = MHD_TLS_CONN_TLS_FAILED;
+    connection->tls.gnutls.tls_state = MHD_TLS_CONN_TLS_FAILED;
 #ifdef HAVE_MESSAGES
     MHD_DLOG (connection->daemon,
               _ ("Error: received handshake message out of context.\n"));
@@ -196,23 +196,23 @@ MHD_set_https_callbacks (struct MHD_Connection *connection)
 bool
 MHD_tls_connection_shutdown (struct MHD_Connection *connection)
 {
-  if (MHD_TLS_CONN_WR_CLOSED > connection->tls_state)
+  if (MHD_TLS_CONN_WR_CLOSED > connection->tls.gnutls.tls_state)
   {
     const int res =
-      gnutls_bye (connection->tls_session, GNUTLS_SHUT_WR);
+      gnutls_bye (connection->tls.gnutls.tls_session, GNUTLS_SHUT_WR);
     if (GNUTLS_E_SUCCESS == res)
     {
-      connection->tls_state = MHD_TLS_CONN_WR_CLOSED;
+      connection->tls.gnutls.tls_state = MHD_TLS_CONN_WR_CLOSED;
       return true;
     }
     if ((GNUTLS_E_AGAIN == res) ||
         (GNUTLS_E_INTERRUPTED == res))
     {
-      connection->tls_state = MHD_TLS_CONN_WR_CLOSING;
+      connection->tls.gnutls.tls_state = MHD_TLS_CONN_WR_CLOSING;
       return true;
     }
     else
-      connection->tls_state = MHD_TLS_CONN_TLS_FAILED;
+      connection->tls.gnutls.tls_state = MHD_TLS_CONN_TLS_FAILED;
   }
   return false;
 }

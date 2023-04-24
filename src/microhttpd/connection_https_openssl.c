@@ -80,18 +80,43 @@ set_context (SSL_CTX *ctx, const char *path)
  * @return 1 if an error occured, 0 otherwise
 */
 int
-create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port)
+create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
+                          struct MHD_Connection *connection)
 {
   BIO *bio = BIO_new_ssl_connect (ctx);
   SSL ssl;
-  int res;
+  int ret;
+  unsigned long err;
   BIO_get_ssl (bio, &ssl);
 
-  // To prevent some failure when not receiving non-application data
+  // Prevent some failure when not receiving non-application data
   SSL_set_mode (ssl, SSL_MODE_AUTO_RETRY);
-
   BIO_set_conn_hostname (bio, hostnname);
-  res = BIO_do_connect (bio);
+  // Set the BIO in a non blocking mode
+  BIO_set_nbio (bio, 1);
+  if ((MHD_TLS_CONN_INIT == connection->tls.openssl.tls_session) ||
+      (MHD_TLS_CONN_HANDSHAKING == connection->tls.openssl.tls_state))
+  {
+    ret = BIO_do_handshake (bio);
+    if (1 == ret)
+    {
+      connection->tls.openssl.tls_state = MHD_TLS_CONN_CONNECTED;
+      MHD_update_last_activity_ (connection);
+      return 0;
+    }
+    if (0 >= ret)
+    {
+      err = ERR_get_error ();
+      return 1;
+    }
+  #ifdef HAVE_MESSAGES
+    MHD_DLOG (connection->daemon,
+              _ ("Error: received handshake message out of context.\n"));
+  #endif
+    MHD_connection_close_ (connection,
+                           MHD_REQUEST_TERMINATED_WITH_ERROR);
+    return false;
+  }
 
   // Verify the certificate
   if (SSL_get_verify_result (ssl) != X509_V_OK)
