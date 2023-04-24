@@ -1164,6 +1164,48 @@ struct MHD_Reply
   struct MHD_Reply_Properties props;
 };
 
+
+#ifdef HTTPS_SUPPORT
+/**
+ * TLS state for a connection.
+ */
+union TLS_ConnectionState
+{
+
+#if 1 || TLS_SUPPORT_GNUTLS
+  struct
+  {
+
+    /**
+     * State required for HTTPS/SSL/TLS support.
+     */
+    gnutls_session_t tls_session;
+
+    /**
+     * State of connection's TLS layer
+     */
+    enum MHD_TLS_CONN_STATE tls_state;
+
+    /**
+     * Could it be that we are ready to read due to TLS buffers
+     * even though the socket is not?
+     */
+    bool tls_read_ready;
+
+  } gnutls;
+#endif
+
+#if 1 || TLS_SUPPORT_OPENSSL
+  struct
+  {
+    // ...
+  } openssl;
+
+#endif
+
+};
+#endif
+
 /**
  * State kept for each HTTP request.
  */
@@ -1439,20 +1481,10 @@ struct MHD_Connection
 #ifdef HTTPS_SUPPORT
 
   /**
-   * State required for HTTPS/SSL/TLS support.
+   * All of the TLS state.
    */
-  gnutls_session_t tls_session;
+  union TLS_ConnectionState tls;
 
-  /**
-   * State of connection's TLS layer
-   */
-  enum MHD_TLS_CONN_STATE tls_state;
-
-  /**
-   * Could it be that we are ready to read due to TLS buffers
-   * even though the socket is not?
-   */
-  bool tls_read_ready;
 #endif /* HTTPS_SUPPORT */
 
   /**
