@@ -104,9 +104,12 @@ create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
       MHD_update_last_activity_ (connection);
       return 0;
     }
+    // In this block, we handle the case where the connection encountered an error
     if (0 >= ret)
     {
+      // TODO
       err = ERR_get_error ();
+      ERR_print_errors_fp (stderr);
       return 1;
     }
   #ifdef HAVE_MESSAGES
@@ -115,14 +118,14 @@ create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
   #endif
     MHD_connection_close_ (connection,
                            MHD_REQUEST_TERMINATED_WITH_ERROR);
-    return false;
+    return 1;
   }
-
   // Verify the certificate
   if (SSL_get_verify_result (ssl) != X509_V_OK)
   {
     ERR_print_errors_fp (stderr);
-    close_connection (bio);
+    close_connection (bio, connection);
+    return 1;
   }
 
   return 0;
@@ -149,9 +152,24 @@ reset_bio (BIO *bio)
  * @return 1 if an error occured, 0 otherwise
 */
 int
-close_connection (BIO *bio)
+close_connection (BIO *bio, struct MHD_Connection *connection)
 {
-  return ! BIO_free (bio);
+  if (MHD_TLS_CONN_WR_CLOSED > connection->tls.openssl.tls_state)
+  {
+    // The BIO can not be reused
+    const int res = BIO_free (bio);
+    if (1 == res)
+    {
+      connection->tls.openssl.tls_state = MHD_TLS_CONN_WR_CLOSED;
+      return 0;
+    }
+    // In this block, we handle the case where the connection closing encountered an error
+    if (0 == res)
+    {
+      // TODO
+    }
+  }
+
 }
 
 
