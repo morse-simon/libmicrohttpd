@@ -84,7 +84,7 @@ create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
                           struct MHD_Connection *connection)
 {
   BIO *bio = BIO_new_ssl_connect (ctx);
-  SSL ssl;
+  SSL *ssl;
   int ret;
   unsigned long err;
   BIO_get_ssl (bio, &ssl);
