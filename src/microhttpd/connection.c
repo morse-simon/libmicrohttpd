@@ -2521,16 +2521,16 @@ MHD_connection_update_event_loop_info (struct MHD_Connection *connection)
   if (connection->suspended)
     return; /* States will be updated after resume. */
 #ifdef HTTPS_SUPPORT
-  if (MHD_TLS_CONN_NO_TLS != connection->tls_state)
+  if (MHD_TLS_CONN_NO_TLS != connection->tls.gnutls.tls_state)
   {   /* HTTPS connection. */
-    switch (connection->tls_state)
+    switch (connection->tls.gnutls.tls_state)
     {
     case MHD_TLS_CONN_INIT:
       connection->event_loop_info = MHD_EVENT_LOOP_INFO_READ;
       return;
     case MHD_TLS_CONN_HANDSHAKING:
     case MHD_TLS_CONN_WR_CLOSING:
-      if (0 == gnutls_record_get_direction (connection->tls_session))
+      if (0 == gnutls_record_get_direction (connection->tls.gnutls.tls_session))
         connection->event_loop_info = MHD_EVENT_LOOP_INFO_READ;
       else
         connection->event_loop_info = MHD_EVENT_LOOP_INFO_WRITE;
@@ -4096,9 +4096,9 @@ MHD_connection_handle_read (struct MHD_Connection *connection,
        (connection->suspended) )
     return;
 #ifdef HTTPS_SUPPORT
-  if (MHD_TLS_CONN_NO_TLS != connection->tls_state)
+  if (MHD_TLS_CONN_NO_TLS != connection->tls.gnutls.tls_state)
   {   /* HTTPS connection. */
-    if (MHD_TLS_CONN_CONNECTED > connection->tls_state)
+    if (MHD_TLS_CONN_CONNECTED > connection->tls.gnutls.tls_state)
     {
       if (! MHD_run_tls_handshake_ (connection))
         return;
@@ -4270,9 +4270,9 @@ MHD_connection_handle_write (struct MHD_Connection *connection)
     return;
 
 #ifdef HTTPS_SUPPORT
-  if (MHD_TLS_CONN_NO_TLS != connection->tls_state)
+  if (MHD_TLS_CONN_NO_TLS != connection->tls.gnutls.tls_state)
   {   /* HTTPS connection. */
-    if (MHD_TLS_CONN_CONNECTED > connection->tls_state)
+    if (MHD_TLS_CONN_CONNECTED > connection->tls.gnutls.tls_state)
     {
       if (! MHD_run_tls_handshake_ (connection))
         return;
@@ -4830,10 +4830,10 @@ MHD_connection_handle_idle (struct MHD_Connection *connection)
   while (! connection->suspended)
   {
 #ifdef HTTPS_SUPPORT
-    if (MHD_TLS_CONN_NO_TLS != connection->tls_state)
+    if (MHD_TLS_CONN_NO_TLS != connection->tls.gnutls.tls_state)
     {     /* HTTPS connection. */
-      if ((MHD_TLS_CONN_INIT <= connection->tls_state) &&
-          (MHD_TLS_CONN_CONNECTED > connection->tls_state))
+      if ((MHD_TLS_CONN_INIT <= connection->tls.gnutls.tls_state) &&
+          (MHD_TLS_CONN_CONNECTED > connection->tls.gnutls.tls_state))
         break;
     }
 #endif /* HTTPS_SUPPORT */
@@ -5388,29 +5388,30 @@ MHD_get_connection_info (struct MHD_Connection *connection,
   {
 #ifdef HTTPS_SUPPORT
   case MHD_CONNECTION_INFO_CIPHER_ALGO:
-    if (NULL == connection->tls_session)
+    if (NULL == connection->tls.gnutls.tls_session)
       return NULL;
     if (1)
     { /* Workaround to mute compiler warning */
       gnutls_cipher_algorithm_t res;
-      res = gnutls_cipher_get (connection->tls_session);
+      res = gnutls_cipher_get (connection->tls.gnutls.tls_session);
       connection->connection_info_dummy.cipher_algorithm = (int) res;
     }
     return &connection->connection_info_dummy;
   case MHD_CONNECTION_INFO_PROTOCOL:
-    if (NULL == connection->tls_session)
+    if (NULL == connection->tls.gnutls.tls_session)
       return NULL;
     if (1)
     { /* Workaround to mute compiler warning */
       gnutls_protocol_t res;
-      res = gnutls_protocol_get_version (connection->tls_session);
+      res = gnutls_protocol_get_version (connection->tls.gnutls.tls_session);
       connection->connection_info_dummy.protocol = (int) res;
     }
     return &connection->connection_info_dummy;
   case MHD_CONNECTION_INFO_GNUTLS_SESSION:
-    if (NULL == connection->tls_session)
+    if (NULL == connection->tls.gnutls.tls_session)
       return NULL;
-    connection->connection_info_dummy.tls_session = connection->tls_session;
+    connection->connection_info_dummy.tls_session =
+      connection->tls.gnutls.tls_session;
     return &connection->connection_info_dummy;
 #else  /* ! HTTPS_SUPPORT */
   case MHD_CONNECTION_INFO_CIPHER_ALGO:

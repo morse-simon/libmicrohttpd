@@ -1195,10 +1195,20 @@ union TLS_ConnectionState
   } gnutls;
 #endif
 
-#if TLS_SUPPORT_OPENSSL
+#if 1 || TLS_SUPPORT_OPENSSL
   struct
   {
-    // ...
+    /**
+     * State of connection's TLS layer
+     * To modify
+     */
+    enum MHD_TLS_CONN_STATE tls_state;
+
+    /**
+     * State required for HTTPS/SSL/TLS support.
+     */
+    gnutls_session_t tls_session;
+
   } openssl;
 
 #endif
@@ -1305,7 +1315,7 @@ union TLS_DaemonState
     // ...
   } openssl;
   #endif
-}
+};
 #endif
 
 /**
@@ -2265,7 +2275,7 @@ struct MHD_Daemon
   struct MHD_UpgradeResponseHandle *urh_tail;
 #endif /* UPGRADE_SUPPORT */
 
-  union TLS_DaemonState tls_damonsState;
+  union TLS_DaemonState tls_daemonsState;
 
 #endif /* HTTPS_SUPPORT */
 

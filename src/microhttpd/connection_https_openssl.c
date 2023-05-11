@@ -32,11 +32,17 @@
 #include  "openssl/ssl.h"
 #include  "openssl/err.h"
 
-/* Initializing OpenSSL */
+/**
+ * Initialize the OpenSSL library
+*/
+void
+init_openssl ()
+{
+  SSL_load_error_strings ();
+  ERR_load_BIO_strings ();
+  OpenSSL_add_all_algorithms ();
+}
 
-SSL_load_error_strings ();
-ERR_load_BIO_strings ();
-OpenSSL_add_all_algorithms ();
 
 /**
  * create a new SSL_CTX structure

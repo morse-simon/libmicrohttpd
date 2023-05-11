@@ -69,12 +69,12 @@ recv_tls_adapter (struct MHD_Connection *connection,
         ~((enum MHD_EpollState) MHD_EPOLL_STATE_READ_READY);
 #endif
     /* Any network errors means that buffer is empty. */
-    connection->tls_read_ready = false;
+    connection->tls.gnutls.tls_read_ready = false;
     return MHD_ERR_AGAIN_;
   }
   if (res < 0)
   {
-    connection->tls_read_ready = false;
+    connection->tls.gnutls.tls_read_ready = false;
     if ( (GNUTLS_E_DECRYPTION_FAILED == res) ||
          (GNUTLS_E_INVALID_SESSION == res) ||
          (GNUTLS_E_DECOMPRESSION_FAILED == res) ||
@@ -111,7 +111,7 @@ recv_tls_adapter (struct MHD_Connection *connection,
 #endif /* EPOLL_SUPPORT */
 
   /* Check whether TLS buffers still have some unread data. */
-  connection->tls_read_ready =
+  connection->tls.gnutls.tls_read_ready =
     ( ((size_t) res == i) &&
       (0 != gnutls_record_check_pending (connection->tls.gnutls.tls_session)) );
   return res;

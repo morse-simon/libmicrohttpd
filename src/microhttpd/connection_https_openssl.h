@@ -25,4 +25,7 @@
 
 #ifndef CONNECTION_HTTPS_EXT_OPENSSL_H
 #define CONNECTION_HTTPS_EXT_OPENSSL_H
+
+#include "internal.h"
+
 #endif

@@ -206,7 +206,7 @@ endif
 
 if ENABLE_HTTPS
 libmicrohttpd_la_SOURCES += \
-  connection_https.c connection_https.h
+  connection_https_openssl.c connection_https_openssl.h
 endif
 
 check_PROGRAMS = \
