@@ -779,7 +779,7 @@ MHD_send_data_ (struct MHD_Connection *connection,
   {
 #ifdef HTTPS_SUPPORT
     pre_send_setopt (connection, (! tls_conn), push_data);
-    ret = gnutls_record_send (connection->tls_session,
+    ret = gnutls_record_send (connection->tls.gnutls.tls_session,
                               buffer,
                               buffer_size);
     if (GNUTLS_E_AGAIN == ret)

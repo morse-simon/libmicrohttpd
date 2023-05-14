@@ -505,24 +505,28 @@ MHD_init_daemon_certificate (struct MHD_Daemon *daemon)
   int ret;
 
 #if GNUTLS_VERSION_MAJOR >= 3
-  if (NULL != daemon->cert_callback)
+  if (NULL != daemon->tls_daemonsState.gnutls.cert_callback)
   {
-    gnutls_certificate_set_retrieve_function2 (daemon->x509_cred,
-                                               daemon->cert_callback);
+    gnutls_certificate_set_retrieve_function2 (
+      daemon->tls_daemonsState.gnutls.x509_cred,
+      daemon->tls_daemonsState.gnutls.
+      cert_callback);
   }
 #endif
 #if GNUTLS_VERSION_NUMBER >= 0x030603
-  else if (NULL != daemon->cert_callback2)
+  else if (NULL != daemon->tls_daemonsState.gnutls.cert_callback2)
   {
-    gnutls_certificate_set_retrieve_function3 (daemon->x509_cred,
-                                               daemon->cert_callback2);
+    gnutls_certificate_set_retrieve_function3 (
+      daemon->tls_daemonsState.gnutls.x509_cred,
+      daemon->tls_daemonsState.gnutls.
+      cert_callback2);
   }
 #endif
 
-  if (NULL != daemon->https_mem_trust)
+  if (NULL != daemon->tls_daemonsState.gnutls.https_mem_trust)
   {
     size_t paramlen;
-    paramlen = strlen (daemon->https_mem_trust);
+    paramlen = strlen (daemon->tls_daemonsState.gnutls.https_mem_trust);
     if (UINT_MAX < paramlen)
     {
 #ifdef HAVE_MESSAGES
@@ -531,11 +535,13 @@ MHD_init_daemon_certificate (struct MHD_Daemon *daemon)
 #endif
       return -1;
     }
-    cert.data = (unsigned char *) _MHD_DROP_CONST (daemon->https_mem_trust);
+    cert.data = (unsigned char *) _MHD_DROP_CONST (
+      daemon->tls_daemonsState.gnutls.https_mem_trust);
     cert.size = (unsigned int) paramlen;
-    if (gnutls_certificate_set_x509_trust_mem (daemon->x509_cred,
-                                               &cert,
-                                               GNUTLS_X509_FMT_PEM) < 0)
+    if (gnutls_certificate_set_x509_trust_mem (
+          daemon->tls_daemonsState.gnutls.x509_cred,
+          &cert,
+          GNUTLS_X509_FMT_PEM) < 0)
     {
 #ifdef HAVE_MESSAGES
       MHD_DLOG (daemon,
@@ -545,20 +551,21 @@ MHD_init_daemon_certificate (struct MHD_Daemon *daemon)
     }
   }
 
-  if (daemon->have_dhparams)
+  if (daemon->tls_daemonsState.gnutls.have_dhparams)
   {
-    gnutls_certificate_set_dh_params (daemon->x509_cred,
-                                      daemon->https_mem_dhparams);
+    gnutls_certificate_set_dh_params (daemon->tls_daemonsState.gnutls.x509_cred,
+                                      daemon->tls_daemonsState.gnutls.
+                                      https_mem_dhparams);
   }
   /* certificate & key loaded from memory */
-  if ( (NULL != daemon->https_mem_cert) &&
-       (NULL != daemon->https_mem_key) )
+  if ( (NULL != daemon->tls_daemonsState.gnutls.https_mem_cert) &&
+       (NULL != daemon->tls_daemonsState.gnutls.https_mem_key) )
   {
     size_t param1len;
     size_t param2len;
 
-    param1len = strlen (daemon->https_mem_key);
-    param2len = strlen (daemon->https_mem_cert);
+    param1len = strlen (daemon->tls_daemonsState.gnutls.https_mem_key);
+    param2len = strlen (daemon->tls_daemonsState.gnutls.https_mem_cert);
     if ( (UINT_MAX < param1len) ||
          (UINT_MAX < param2len) )
     {
@@ -568,20 +575,24 @@ MHD_init_daemon_certificate (struct MHD_Daemon *daemon)
 #endif
       return -1;
     }
-    key.data = (unsigned char *) _MHD_DROP_CONST (daemon->https_mem_key);
+    key.data = (unsigned char *) _MHD_DROP_CONST (
+      daemon->tls_daemonsState.gnutls.https_mem_key);
     key.size = (unsigned int) param1len;
-    cert.data = (unsigned char *) _MHD_DROP_CONST (daemon->https_mem_cert);
+    cert.data = (unsigned char *) _MHD_DROP_CONST (
+      daemon->tls_daemonsState.gnutls.https_mem_cert);
     cert.size = (unsigned int) param2len;
 
-    if (NULL != daemon->https_key_password)
+    if (NULL != daemon->tls_daemonsState.gnutls.https_key_password)
     {
 #if GNUTLS_VERSION_NUMBER >= 0x030111
-      ret = gnutls_certificate_set_x509_key_mem2 (daemon->x509_cred,
-                                                  &cert,
-                                                  &key,
-                                                  GNUTLS_X509_FMT_PEM,
-                                                  daemon->https_key_password,
-                                                  0);
+      ret = gnutls_certificate_set_x509_key_mem2 (
+        daemon->tls_daemonsState.gnutls.x509_cred,
+        &cert,
+        &key,
+        GNUTLS_X509_FMT_PEM,
+        daemon->tls_daemonsState.
+        gnutls.https_key_password,
+        0);
 #else
 #ifdef HAVE_MESSAGES
       MHD_DLOG (daemon,
@@ -592,10 +603,11 @@ MHD_init_daemon_certificate (struct MHD_Daemon *daemon)
 #endif
     }
     else
-      ret = gnutls_certificate_set_x509_key_mem (daemon->x509_cred,
-                                                 &cert,
-                                                 &key,
-                                                 GNUTLS_X509_FMT_PEM);
+      ret = gnutls_certificate_set_x509_key_mem (
+        daemon->tls_daemonsState.gnutls.x509_cred,
+        &cert,
+        &key,
+        GNUTLS_X509_FMT_PEM);
 #ifdef HAVE_MESSAGES
     if (0 != ret)
       MHD_DLOG (daemon,
@@ -605,11 +617,11 @@ MHD_init_daemon_certificate (struct MHD_Daemon *daemon)
     return ret;
   }
 #if GNUTLS_VERSION_MAJOR >= 3
-  if (NULL != daemon->cert_callback)
+  if (NULL != daemon->tls_daemonsState.gnutls.cert_callback)
     return 0;
 #endif
 #if GNUTLS_VERSION_NUMBER >= 0x030603
-  else if (NULL != daemon->cert_callback2)
+  else if (NULL != daemon->tls_daemonsState.gnutls.cert_callback2)
     return 0;
 #endif
 #ifdef HAVE_MESSAGES
@@ -629,16 +641,18 @@ MHD_init_daemon_certificate (struct MHD_Daemon *daemon)
 static int
 MHD_TLS_init (struct MHD_Daemon *daemon)
 {
-  switch (daemon->cred_type)
+  switch (daemon->tls_daemonsState.gnutls.cred_type)
   {
   case GNUTLS_CRD_CERTIFICATE:
     if (0 !=
-        gnutls_certificate_allocate_credentials (&daemon->x509_cred))
+        gnutls_certificate_allocate_credentials (
+          &daemon->tls_daemonsState.gnutls.x509_cred))
       return GNUTLS_E_MEMORY_ERROR;
     return MHD_init_daemon_certificate (daemon);
   case GNUTLS_CRD_PSK:
     if (0 !=
-        gnutls_psk_allocate_server_credentials (&daemon->psk_cred))
+        gnutls_psk_allocate_server_credentials (
+          &daemon->tls_daemonsState.gnutls.psk_cred))
       return GNUTLS_E_MEMORY_ERROR;
     return 0;
   case GNUTLS_CRD_ANON:
@@ -648,7 +662,7 @@ MHD_TLS_init (struct MHD_Daemon *daemon)
 #ifdef HAVE_MESSAGES
     MHD_DLOG (daemon,
               _ ("Error: invalid credentials type %d specified.\n"),
-              daemon->cred_type);
+              daemon->tls_daemonsState.gnutls.cred_type);
 #endif
     return -1;
   }
@@ -1179,7 +1193,7 @@ call_handlers (struct MHD_Connection *con,
   ret = MHD_YES;
 
 #ifdef HTTPS_SUPPORT
-  if (con->tls_read_ready)
+  if (con->tls.gnutls.tls_read_ready)
     read_ready = true;
 #endif /* HTTPS_SUPPORT */
   if ( (0 != (MHD_EVENT_LOOP_INFO_READ & con->event_loop_info)) &&
@@ -1259,7 +1273,7 @@ call_handlers (struct MHD_Connection *con,
     if (0 != (MHD_EVENT_LOOP_INFO_PROCESS & con->event_loop_info))
       con->daemon->data_already_pending = true;
 #ifdef HTTPS_SUPPORT
-    else if ( (con->tls_read_ready) &&
+    else if ( (con->tls.gnutls.tls_read_ready) &&
               (0 != (MHD_EVENT_LOOP_INFO_READ & con->event_loop_info)) )
       con->daemon->data_already_pending = true;
 #endif /* HTTPS_SUPPORT */
@@ -1287,7 +1301,7 @@ cleanup_upgraded_connection (struct MHD_Connection *connection)
   /* Signal remote client the end of TLS connection by
    * gracefully closing TLS session. */
   if (0 != (connection->daemon->options & MHD_USE_TLS))
-    gnutls_bye (connection->tls_session,
+    gnutls_bye (connection->tls.gnutls.tls_session,
                 GNUTLS_SHUT_WR);
 
   if (MHD_INVALID_SOCKET != urh->mhd.socket)
@@ -1374,7 +1388,7 @@ process_urh (struct MHD_UpgradeResponseHandle *urh)
     /* Reading from remote client is not required anymore. */
     urh->in_buffer_size = 0;
     urh->app.celi &= ~((enum MHD_EpollState) MHD_EPOLL_STATE_READ_READY);
-    connection->tls_read_ready = false;
+    connection->tls.gnutls.tls_read_ready = false;
   }
 
   /* On some platforms (W32, possibly Darwin) failed send() (send() will
@@ -1393,7 +1407,7 @@ process_urh (struct MHD_UpgradeResponseHandle *urh)
    * handle reading from remote TLS client
    */
   if ( ( (0 != (MHD_EPOLL_STATE_READ_READY & urh->app.celi)) ||
-         (connection->tls_read_ready) ) &&
+         (connection->tls.gnutls.tls_read_ready) ) &&
        (urh->in_buffer_used < urh->in_buffer_size) )
   {
     ssize_t res;
@@ -1403,8 +1417,8 @@ process_urh (struct MHD_UpgradeResponseHandle *urh)
     if (buf_size > SSIZE_MAX)
       buf_size = SSIZE_MAX;
 
-    connection->tls_read_ready = false;
-    res = gnutls_record_recv (connection->tls_session,
+    connection->tls.gnutls.tls_read_ready = false;
+    res = gnutls_record_recv (connection->tls.gnutls.tls_session,
                               &urh->in_buffer[urh->in_buffer_used],
                               buf_size);
     if (0 >= res)
@@ -1424,9 +1438,9 @@ process_urh (struct MHD_UpgradeResponseHandle *urh)
     else   /* 0 < res */
     {
       urh->in_buffer_used += (size_t) res;
-      if (0 < gnutls_record_check_pending (connection->tls_session))
+      if (0 < gnutls_record_check_pending (connection->tls.gnutls.tls_session))
       {
-        connection->tls_read_ready = true;
+        connection->tls.gnutls.tls_read_ready = true;
       }
     }
     if (MHD_EPOLL_STATE_ERROR ==
@@ -1506,7 +1520,7 @@ process_urh (struct MHD_UpgradeResponseHandle *urh)
     if (data_size > SSIZE_MAX)
       data_size = SSIZE_MAX;
 
-    res = gnutls_record_send (connection->tls_session,
+    res = gnutls_record_send (connection->tls.gnutls.tls_session,
                               urh->out_buffer,
                               data_size);
     if (0 >= res)
@@ -1598,7 +1612,7 @@ process_urh (struct MHD_UpgradeResponseHandle *urh)
           /* Reading from remote client is not required anymore. */
           urh->in_buffer_size = 0;
           urh->app.celi &= ~((enum MHD_EpollState) MHD_EPOLL_STATE_READ_READY);
-          connection->tls_read_ready = false;
+          connection->tls.gnutls.tls_read_ready = false;
         }
       }
     }
@@ -1623,13 +1637,13 @@ process_urh (struct MHD_UpgradeResponseHandle *urh)
       /* Reading from remote client is not required anymore. */
       urh->in_buffer_size = 0;
       urh->app.celi &= ~((enum MHD_EpollState) MHD_EPOLL_STATE_READ_READY);
-      connection->tls_read_ready = false;
+      connection->tls.gnutls.tls_read_ready = false;
     }
   }
 
   /* Check whether data is present in TLS buffers
    * and incoming forward buffer have some space. */
-  if ( (connection->tls_read_ready) &&
+  if ( (connection->tls.gnutls.tls_read_ready) &&
        (urh->in_buffer_used < urh->in_buffer_size) &&
        (0 == (daemon->options & MHD_USE_THREAD_PER_CONNECTION)) )
     daemon->data_already_pending = true;
@@ -1720,7 +1734,7 @@ thread_main_connection_upgrade (struct MHD_Connection *con)
       {
         struct timeval *tvp;
         struct timeval tv;
-        if (((con->tls_read_ready) &&
+        if (((con->tls.gnutls.tls_read_ready) &&
              (urh->in_buffer_used < urh->in_buffer_size)) ||
             (daemon->shutdown))
         {         /* No need to wait if incoming data is already pending in TLS buffers. */
@@ -1779,7 +1793,7 @@ thread_main_connection_upgrade (struct MHD_Connection *con)
 
       urh_update_pollfd (urh, p);
 
-      if (((con->tls_read_ready) &&
+      if (((con->tls.gnutls.tls_read_ready) &&
            (urh->in_buffer_used < urh->in_buffer_size)) ||
           (daemon->shutdown))
         timeout = 0;     /* No need to wait if incoming data is already pending in TLS buffers. */
@@ -1989,7 +2003,7 @@ thread_main_handle_connection (void *data)
     use_zero_timeout =
       (0 != (MHD_EVENT_LOOP_INFO_PROCESS & con->event_loop_info)
 #ifdef HTTPS_SUPPORT
-       || ( (con->tls_read_ready) &&
+       || ( (con->tls.gnutls.tls_read_ready) &&
             (0 != (MHD_EVENT_LOOP_INFO_READ & con->event_loop_info)) )
 #endif /* HTTPS_SUPPORT */
       );
@@ -2340,7 +2354,7 @@ psk_gnutls_adapter (gnutls_session_t session,
   }
   daemon = connection->daemon;
 #if GNUTLS_VERSION_MAJOR >= 3
-  if (NULL == daemon->cred_callback)
+  if (NULL == daemon->tls_daemonsState.gnutls.cred_callback)
   {
 #ifdef HAVE_MESSAGES
     MHD_DLOG (daemon,
@@ -2348,11 +2362,12 @@ psk_gnutls_adapter (gnutls_session_t session,
 #endif
     return -1;
   }
-  if (0 != daemon->cred_callback (daemon->cred_callback_cls,
-                                  connection,
-                                  username,
-                                  &app_psk,
-                                  &app_psk_size))
+  if (0 != daemon->tls_daemonsState.gnutls.cred_callback (
+        daemon->tls_daemonsState.gnutls.cred_callback_cls,
+        connection,
+        username,
+        &app_psk,
+        &app_psk_size))
     return -1;
   if (NULL == (key->data = gnutls_malloc (app_psk_size)))
   {
@@ -2567,14 +2582,17 @@ new_connection_prepare_ (struct MHD_Daemon *daemon,
     if (0 != (daemon->options & MHD_USE_INSECURE_TLS_EARLY_DATA))
       flags |= GNUTLS_ENABLE_EARLY_DATA;
 #endif
-    connection->tls_state = MHD_TLS_CONN_INIT;
+    connection->tls.gnutls.tls_state = MHD_TLS_CONN_INIT;
     MHD_set_https_callbacks (connection);
-    if ((GNUTLS_E_SUCCESS != gnutls_init (&connection->tls_session, flags)) ||
-        (GNUTLS_E_SUCCESS != gnutls_priority_set (connection->tls_session,
-                                                  daemon->priority_cache)))
+    if ((GNUTLS_E_SUCCESS != gnutls_init (&connection->tls.gnutls.tls_session,
+                                          flags)) ||
+        (GNUTLS_E_SUCCESS != gnutls_priority_set (
+           connection->tls.gnutls.tls_session,
+           daemon->tls_daemonsState.
+           gnutls.priority_cache)))
     {
-      if (NULL != connection->tls_session)
-        gnutls_deinit (connection->tls_session);
+      if (NULL != connection->tls.gnutls.tls_session)
+        gnutls_deinit (connection->tls.gnutls.tls_session);
       MHD_socket_close_chk_ (client_socket);
       MHD_ip_limit_del (daemon,
                         addr,
@@ -2592,7 +2610,7 @@ new_connection_prepare_ (struct MHD_Daemon *daemon,
       return NULL;
     }
 #if (GNUTLS_VERSION_NUMBER + 0 >= 0x030200)
-    if (! daemon->disable_alpn)
+    if (! daemon->tls_daemonsState.gnutls.disable_alpn)
     {
       static const char prt1[] = "http/1.1"; /* Registered code for HTTP/1.1 */
       static const char prt2[] = "http/1.0"; /* Registered code for HTTP/1.0 */
@@ -2601,7 +2619,7 @@ new_connection_prepare_ (struct MHD_Daemon *daemon,
         {_MHD_DROP_CONST (prt2), MHD_STATICSTR_LEN_ (prt2)} };
 
       if (GNUTLS_E_SUCCESS !=
-          gnutls_alpn_set_protocols (connection->tls_session,
+          gnutls_alpn_set_protocols (connection->tls.gnutls.tls_session,
                                      prts,
                                      sizeof(prts) / sizeof(prts[0]),
                                      0 /* | GNUTLS_ALPN_SERVER_PRECEDENCE */))
@@ -2615,22 +2633,23 @@ new_connection_prepare_ (struct MHD_Daemon *daemon,
       }
     }
 #endif /* GNUTLS_VERSION_NUMBER >= 0x030200 */
-    gnutls_session_set_ptr (connection->tls_session,
+    gnutls_session_set_ptr (connection->tls.gnutls.tls_session,
                             connection);
-    switch (daemon->cred_type)
+    switch (daemon->tls_daemonsState.gnutls.cred_type)
     {
     /* set needed credentials for certificate authentication. */
     case GNUTLS_CRD_CERTIFICATE:
-      gnutls_credentials_set (connection->tls_session,
+      gnutls_credentials_set (connection->tls.gnutls.tls_session,
                               GNUTLS_CRD_CERTIFICATE,
-                              daemon->x509_cred);
+                              daemon->tls_daemonsState.gnutls.x509_cred);
       break;
     case GNUTLS_CRD_PSK:
-      gnutls_credentials_set (connection->tls_session,
+      gnutls_credentials_set (connection->tls.gnutls.tls_session,
                               GNUTLS_CRD_PSK,
-                              daemon->psk_cred);
-      gnutls_psk_set_server_credentials_function (daemon->psk_cred,
-                                                  &psk_gnutls_adapter);
+                              daemon->tls_daemonsState.gnutls.psk_cred);
+      gnutls_psk_set_server_credentials_function (
+        daemon->tls_daemonsState.gnutls.psk_cred,
+        &psk_gnutls_adapter);
       break;
     case GNUTLS_CRD_ANON:
     case GNUTLS_CRD_SRP:
@@ -2640,9 +2659,9 @@ new_connection_prepare_ (struct MHD_Daemon *daemon,
       MHD_DLOG (daemon,
                 _ ("Failed to setup TLS credentials: " \
                    "unknown credential type %d.\n"),
-                daemon->cred_type);
+                daemon->tls_daemonsState.gnutls.cred_type);
 #endif
-      gnutls_deinit (connection->tls_session);
+      gnutls_deinit (connection->tls.gnutls.tls_session);
       MHD_socket_close_chk_ (client_socket);
       MHD_ip_limit_del (daemon,
                         addr,
@@ -2657,18 +2676,18 @@ new_connection_prepare_ (struct MHD_Daemon *daemon,
       return NULL;
     }
 #if (GNUTLS_VERSION_NUMBER + 0 >= 0x030109) && ! defined(_WIN64)
-    gnutls_transport_set_int (connection->tls_session,
+    gnutls_transport_set_int (connection->tls.gnutls.tls_session,
                               (int) (client_socket));
 #else  /* GnuTLS before 3.1.9 or Win x64 */
-    gnutls_transport_set_ptr (connection->tls_session,
+    gnutls_transport_set_ptr (connection->tls.gnutls.tls_session,
                               (gnutls_transport_ptr_t) (intptr_t) (client_socket));
 #endif /* GnuTLS before 3.1.9 or Win x64 */
 #ifdef MHD_TLSLIB_NEED_PUSH_FUNC
-    gnutls_transport_set_push_function (connection->tls_session,
+    gnutls_transport_set_push_function (connection->tls.gnutls.tls_session,
                                         MHD_tls_push_func_);
 #endif /* MHD_TLSLIB_NEED_PUSH_FUNC */
-    if (daemon->https_mem_trust)
-      gnutls_certificate_server_set_request (connection->tls_session,
+    if (daemon->tls_daemonsState.gnutls.https_mem_trust)
+      gnutls_certificate_server_set_request (connection->tls.gnutls.tls_session,
                                              GNUTLS_CERT_REQUEST);
 #else  /* ! HTTPS_SUPPORT */
     MHD_socket_close_chk_ (client_socket);
@@ -2709,10 +2728,10 @@ new_connection_close_ (struct MHD_Daemon *daemon,
 #endif /* EPOLL_SUPPORT */
 
 #ifdef HTTPS_SUPPORT
-  if (NULL != connection->tls_session)
+  if (NULL != connection->tls.gnutls.tls_session)
   {
     mhd_assert (0 != (daemon->options & MHD_USE_TLS));
-    gnutls_deinit (connection->tls_session);
+    gnutls_deinit (connection->tls.gnutls.tls_session);
   }
 #endif /* HTTPS_SUPPORT */
   MHD_socket_close_chk_ (connection->socket_fd);
@@ -2909,8 +2928,8 @@ new_connection_process_ (struct MHD_Daemon *daemon,
   }
   /* Free resources allocated before the call of this functions */
 #ifdef HTTPS_SUPPORT
-  if (NULL != connection->tls_session)
-    gnutls_deinit (connection->tls_session);
+  if (NULL != connection->tls.gnutls.tls_session)
+    gnutls_deinit (connection->tls.gnutls.tls_session);
 #endif /* HTTPS_SUPPORT */
   MHD_ip_limit_del (daemon,
                     connection->addr,
@@ -3908,8 +3927,8 @@ MHD_cleanup_connections (struct MHD_Daemon *daemon)
 #endif /* UPGRADE_SUPPORT */
     MHD_pool_destroy (pos->pool);
 #ifdef HTTPS_SUPPORT
-    if (NULL != pos->tls_session)
-      gnutls_deinit (pos->tls_session);
+    if (NULL != pos->tls.gnutls.tls_session)
+      gnutls_deinit (pos->tls.gnutls.tls_session);
 #endif /* HTTPS_SUPPORT */
 
     /* clean up the connection */
@@ -5031,7 +5050,7 @@ is_urh_ready (struct MHD_UpgradeResponseHandle *const urh)
   if (connection->daemon->shutdown)
     return true;
   if ( ( (0 != (MHD_EPOLL_STATE_READ_READY & urh->app.celi)) ||
-         (connection->tls_read_ready) ) &&
+         (connection->tls.gnutls.tls_read_ready) ) &&
        (urh->in_buffer_used < urh->in_buffer_size) )
     return true;
   if ( (0 != (MHD_EPOLL_STATE_READ_READY & urh->mhd.celi)) &&
@@ -5969,7 +5988,7 @@ daemon_tls_priorities_init_default (struct MHD_Daemon *daemon)
   int res;
 
   mhd_assert (0 != (((unsigned int) daemon->options) & MHD_USE_TLS));
-  mhd_assert (NULL == daemon->priority_cache);
+  mhd_assert (NULL == &daemon->tls_daemonsState.gnutls.priority_cache);
   mhd_assert (MHD_TLS_PRIO_BASE_NORMAL + 1 == \
               sizeof(MHD_TlsBasePriotities) / sizeof(MHD_TlsBasePriotities[0]));
 
@@ -5977,7 +5996,7 @@ daemon_tls_priorities_init_default (struct MHD_Daemon *daemon)
        p < sizeof(MHD_TlsBasePriotities) / sizeof(MHD_TlsBasePriotities[0]);
        ++p)
   {
-    res = gnutls_priority_init (&daemon->priority_cache,
+    res = gnutls_priority_init (&daemon->tls_daemonsState.gnutls.priority_cache,
                                 MHD_TlsBasePriotities[p].str, NULL);
     if (GNUTLS_E_SUCCESS == res)
     {
@@ -6047,7 +6066,7 @@ daemon_tls_priorities_init_append_inner_ (struct MHD_Daemon *daemon,
 
   (void) buf_size; /* Mute compiler warning for non-Debug builds */
   mhd_assert (0 != (((unsigned int) daemon->options) & MHD_USE_TLS));
-  mhd_assert (NULL == daemon->priority_cache);
+  mhd_assert (NULL == &daemon->tls_daemonsState.gnutls.priority_cache);
   mhd_assert (MHD_TLS_PRIO_BASE_NORMAL + 1 == \
               sizeof(MHD_TlsBasePriotities) / sizeof(MHD_TlsBasePriotities[0]));
 
@@ -6059,8 +6078,9 @@ daemon_tls_priorities_init_append_inner_ (struct MHD_Daemon *daemon,
 #if GNUTLS_VERSION_NUMBER >= 0x030300
 #if GNUTLS_VERSION_NUMBER >= 0x030603
     if (NULL == MHD_TlsBasePriotities[p].str)
-      res = gnutls_priority_init2 (&daemon->priority_cache, prio, &err_pos,
-                                   GNUTLS_PRIORITY_INIT_DEF_APPEND);
+      res = gnutls_priority_init2 (
+        &daemon->tls_daemonsState.gnutls.priority_cache, prio, &err_pos,
+        GNUTLS_PRIORITY_INIT_DEF_APPEND);
     else
 #else  \
     /* 0x030300 <= GNUTLS_VERSION_NUMBER && GNUTLS_VERSION_NUMBER < 0x030603 */
@@ -6084,7 +6104,8 @@ daemon_tls_priorities_init_append_inner_ (struct MHD_Daemon *daemon,
       buf_pos += prio_len + 1;
       mhd_assert (buf_size >= buf_pos);
 #endif /* _DEBUG */
-      res = gnutls_priority_init (&daemon->priority_cache, buf, &err_pos);
+      res = gnutls_priority_init (
+        &daemon->tls_daemonsState.gnutls.priority_cache, buf, &err_pos);
     }
     if (GNUTLS_E_SUCCESS == res)
     {
@@ -6357,7 +6378,7 @@ parse_options_va (struct MHD_Daemon *daemon,
       pstr = va_arg (ap,
                      const char *);
       if (0 != (daemon->options & MHD_USE_TLS))
-        daemon->https_mem_key = pstr;
+        daemon->tls_daemonsState.gnutls.https_mem_key = pstr;
 #ifdef HAVE_MESSAGES
       else
         MHD_DLOG (daemon,
@@ -6370,7 +6391,7 @@ parse_options_va (struct MHD_Daemon *daemon,
       pstr = va_arg (ap,
                      const char *);
       if (0 != (daemon->options & MHD_USE_TLS))
-        daemon->https_key_password = pstr;
+        daemon->tls_daemonsState.gnutls.https_key_password = pstr;
 #ifdef HAVE_MESSAGES
       else
         MHD_DLOG (daemon,
@@ -6383,7 +6404,7 @@ parse_options_va (struct MHD_Daemon *daemon,
       pstr = va_arg (ap,
                      const char *);
       if (0 != (daemon->options & MHD_USE_TLS))
-        daemon->https_mem_cert = pstr;
+        daemon->tls_daemonsState.gnutls.https_mem_cert = pstr;
 #ifdef HAVE_MESSAGES
       else
         MHD_DLOG (daemon,
@@ -6396,7 +6417,7 @@ parse_options_va (struct MHD_Daemon *daemon,
       pstr = va_arg (ap,
                      const char *);
       if (0 != (daemon->options & MHD_USE_TLS))
-        daemon->https_mem_trust = pstr;
+        daemon->tls_daemonsState.gnutls.https_mem_trust = pstr;
 #ifdef HAVE_MESSAGES
       else
         MHD_DLOG (daemon,
@@ -6406,8 +6427,9 @@ parse_options_va (struct MHD_Daemon *daemon,
 #endif
       break;
     case MHD_OPTION_HTTPS_CRED_TYPE:
-      daemon->cred_type = (gnutls_credentials_type_t) va_arg (ap,
-                                                              int);
+      daemon->tls_daemonsState.gnutls.cred_type =
+        (gnutls_credentials_type_t) va_arg (ap,
+                                            int);
       break;
     case MHD_OPTION_HTTPS_MEM_DHPARAMS:
       pstr = va_arg (ap,
@@ -6417,7 +6439,8 @@ parse_options_va (struct MHD_Daemon *daemon,
         gnutls_datum_t dhpar;
         size_t pstr_len;
 
-        if (gnutls_dh_params_init (&daemon->https_mem_dhparams) < 0)
+        if (gnutls_dh_params_init (
+              &daemon->tls_daemonsState.gnutls.https_mem_dhparams) < 0)
         {
 #ifdef HAVE_MESSAGES
           MHD_DLOG (daemon,
@@ -6436,18 +6459,20 @@ parse_options_va (struct MHD_Daemon *daemon,
           return MHD_NO;
         }
         dhpar.size = (unsigned int) pstr_len;
-        if (gnutls_dh_params_import_pkcs3 (daemon->https_mem_dhparams,
-                                           &dhpar,
-                                           GNUTLS_X509_FMT_PEM) < 0)
+        if (gnutls_dh_params_import_pkcs3 (
+              daemon->tls_daemonsState.gnutls.https_mem_dhparams,
+              &dhpar,
+              GNUTLS_X509_FMT_PEM) < 0)
         {
 #ifdef HAVE_MESSAGES
           MHD_DLOG (daemon,
                     _ ("Bad Diffie-Hellman parameters format.\n"));
 #endif
-          gnutls_dh_params_deinit (daemon->https_mem_dhparams);
+          gnutls_dh_params_deinit (
+            daemon->tls_daemonsState.gnutls.https_mem_dhparams);
           return MHD_NO;
         }
-        daemon->have_dhparams = true;
+        daemon->tls_daemonsState.gnutls.have_dhparams = true;
       }
 #ifdef HAVE_MESSAGES
       else
@@ -6463,16 +6488,18 @@ parse_options_va (struct MHD_Daemon *daemon,
                      const char *);
       if (0 != (daemon->options & MHD_USE_TLS))
       {
-        if (NULL != daemon->priority_cache)
-          gnutls_priority_deinit (daemon->priority_cache);
+        if (NULL != &daemon->tls_daemonsState.gnutls.priority_cache)
+          gnutls_priority_deinit (
+            daemon->tls_daemonsState.gnutls.priority_cache);
 
         if (MHD_OPTION_HTTPS_PRIORITIES == opt)
         {
           int init_res;
           const char *err_pos;
-          init_res = gnutls_priority_init (&daemon->priority_cache,
-                                           pstr,
-                                           &err_pos);
+          init_res = gnutls_priority_init (
+            &daemon->tls_daemonsState.gnutls.priority_cache,
+            pstr,
+            &err_pos);
           if (GNUTLS_E_SUCCESS != init_res)
           {
 #ifdef HAVE_MESSAGES
@@ -6483,14 +6510,14 @@ parse_options_va (struct MHD_Daemon *daemon,
                       gnutls_strerror (init_res),
                       err_pos);
 #endif
-            daemon->priority_cache = NULL;
+            daemon->tls_daemonsState.gnutls.priority_cache = NULL;
             return MHD_NO;
           }
         }
         else
         {
           /* The cache has been deinited */
-          daemon->priority_cache = NULL;
+          daemon->tls_daemonsState.gnutls.priority_cache = NULL;
           if (! daemon_tls_priorities_init_append (daemon, pstr))
             return MHD_NO;
         }
@@ -6515,7 +6542,7 @@ parse_options_va (struct MHD_Daemon *daemon,
       pgcrf = va_arg (ap,
                       gnutls_certificate_retrieve_function2 *);
       if (0 != (daemon->options & MHD_USE_TLS))
-        daemon->cert_callback = pgcrf;
+        daemon->tls_daemonsState.gnutls.cert_callback = pgcrf;
 #ifdef HAVE_MESSAGES
       else
         MHD_DLOG (daemon,
@@ -6537,7 +6564,7 @@ parse_options_va (struct MHD_Daemon *daemon,
       pgcrf2 = va_arg (ap,
                        gnutls_certificate_retrieve_function3 *);
       if (0 != (daemon->options & MHD_USE_TLS))
-        daemon->cert_callback2 = pgcrf2;
+        daemon->tls_daemonsState.gnutls.cert_callback2 = pgcrf2;
 #ifdef HAVE_MESSAGES
       else
         MHD_DLOG (daemon,
@@ -6813,10 +6840,10 @@ parse_options_va (struct MHD_Daemon *daemon,
 #ifdef HTTPS_SUPPORT
     case MHD_OPTION_GNUTLS_PSK_CRED_HANDLER:
 #if GNUTLS_VERSION_MAJOR >= 3
-      daemon->cred_callback = va_arg (ap,
-                                      MHD_PskServerCredentialsCallback);
-      daemon->cred_callback_cls = va_arg (ap,
-                                          void *);
+      daemon->tls_daemonsState.gnutls.cred_callback = va_arg (ap,
+                                                              MHD_PskServerCredentialsCallback);
+      daemon->tls_daemonsState.gnutls.cred_callback_cls = va_arg (ap,
+                                                                  void *);
       break;
 #else
       MHD_DLOG (daemon,
@@ -6838,8 +6865,8 @@ parse_options_va (struct MHD_Daemon *daemon,
       break;
     case MHD_OPTION_TLS_NO_ALPN:
 #ifdef HTTPS_SUPPORT
-      daemon->disable_alpn = (va_arg (ap,
-                                      int) != 0);
+      daemon->tls_daemonsState.gnutls.disable_alpn = (va_arg (ap,
+                                                              int) != 0);
 #else  /* ! HTTPS_SUPPORT */
       (void) va_arg (ap, int);
 #endif /* ! HTTPS_SUPPORT */
@@ -7116,7 +7143,7 @@ MHD_start_daemon_va (unsigned int flags,
 #endif
   /* try to open listen socket */
 #ifdef HTTPS_SUPPORT
-  daemon->priority_cache = NULL;
+  daemon->tls_daemonsState.gnutls.priority_cache = NULL;
 #endif /* HTTPS_SUPPORT */
   daemon->listen_fd = MHD_INVALID_SOCKET;
   daemon->listen_is_unix = _MHD_NO;
@@ -7176,7 +7203,7 @@ MHD_start_daemon_va (unsigned int flags,
 #ifdef HTTPS_SUPPORT
   if (0 != (*pflags & MHD_USE_TLS))
   {
-    daemon->cred_type = GNUTLS_CRD_CERTIFICATE;
+    daemon->tls_daemonsState.gnutls.cred_type = GNUTLS_CRD_CERTIFICATE;
   }
 #endif /* HTTPS_SUPPORT */
 
@@ -7187,15 +7214,15 @@ MHD_start_daemon_va (unsigned int flags,
   {
 #ifdef HTTPS_SUPPORT
     if ( (0 != (*pflags & MHD_USE_TLS)) &&
-         (NULL != daemon->priority_cache) )
-      gnutls_priority_deinit (daemon->priority_cache);
+         (NULL != &daemon->tls_daemonsState.gnutls.priority_cache) )
+      gnutls_priority_deinit (daemon->tls_daemonsState.gnutls.priority_cache);
 #endif /* HTTPS_SUPPORT */
     free (daemon);
     return NULL;
   }
 #ifdef HTTPS_SUPPORT
   if ((0 != (*pflags & MHD_USE_TLS))
-      && (NULL == daemon->priority_cache)
+      && (NULL == &daemon->tls_daemonsState.gnutls.priority_cache)
       && ! daemon_tls_priorities_init_default (daemon))
   {
 #ifdef HAVE_MESSAGES
@@ -7246,8 +7273,8 @@ MHD_start_daemon_va (unsigned int flags,
                 MHD_itc_last_strerror_ ());
 #endif
 #ifdef HTTPS_SUPPORT
-      if (NULL != daemon->priority_cache)
-        gnutls_priority_deinit (daemon->priority_cache);
+      if (NULL != &daemon->tls_daemonsState.gnutls.priority_cache)
+        gnutls_priority_deinit (daemon->tls_daemonsState.gnutls.priority_cache);
 #endif /* HTTPS_SUPPORT */
       free (daemon);
       return NULL;
@@ -7263,8 +7290,8 @@ MHD_start_daemon_va (unsigned int flags,
 #endif
       MHD_itc_destroy_chk_ (daemon->itc);
 #ifdef HTTPS_SUPPORT
-      if (NULL != daemon->priority_cache)
-        gnutls_priority_deinit (daemon->priority_cache);
+      if (NULL != &daemon->tls_daemonsState.gnutls.priority_cache)
+        gnutls_priority_deinit (daemon->tls_daemonsState.gnutls.priority_cache);
 #endif /* HTTPS_SUPPORT */
       free (daemon);
       return NULL;
@@ -7280,7 +7307,7 @@ MHD_start_daemon_va (unsigned int flags,
     {
 #ifdef HTTPS_SUPPORT
       if (0 != (*pflags & MHD_USE_TLS))
-        gnutls_priority_deinit (daemon->priority_cache);
+        gnutls_priority_deinit (daemon->tls_daemonsState.gnutls.priority_cache);
 #endif /* HTTPS_SUPPORT */
       free (daemon);
       return NULL;
@@ -7301,7 +7328,7 @@ MHD_start_daemon_va (unsigned int flags,
 #endif
 #ifdef HTTPS_SUPPORT
       if (0 != (*pflags & MHD_USE_TLS))
-        gnutls_priority_deinit (daemon->priority_cache);
+        gnutls_priority_deinit (daemon->tls_daemonsState.gnutls.priority_cache);
 #endif /* HTTPS_SUPPORT */
       free (daemon->digest_auth_random_copy);
       free (daemon);
@@ -7318,7 +7345,7 @@ MHD_start_daemon_va (unsigned int flags,
 #endif
 #ifdef HTTPS_SUPPORT
       if (0 != (*pflags & MHD_USE_TLS))
-        gnutls_priority_deinit (daemon->priority_cache);
+        gnutls_priority_deinit (daemon->tls_daemonsState.gnutls.priority_cache);
 #endif /* HTTPS_SUPPORT */
       free (daemon->digest_auth_random_copy);
       free (daemon);
@@ -7335,7 +7362,7 @@ MHD_start_daemon_va (unsigned int flags,
 #endif
 #ifdef HTTPS_SUPPORT
     if (0 != (*pflags & MHD_USE_TLS))
-      gnutls_priority_deinit (daemon->priority_cache);
+      gnutls_priority_deinit (daemon->tls_daemonsState.gnutls.priority_cache);
 #endif /* HTTPS_SUPPORT */
     free (daemon->digest_auth_random_copy);
     free (daemon->nnc);
@@ -8034,7 +8061,7 @@ MHD_start_daemon_va (unsigned int flags,
 #ifdef HTTPS_SUPPORT
   /* API promises to never use the password after initialization,
      so we additionally NULL it here to not deref a dangling pointer. */
-  daemon->https_key_password = NULL;
+  daemon->tls_daemonsState.gnutls.https_key_password = NULL;
 #endif /* HTTPS_SUPPORT */
 
   return daemon;
@@ -8096,11 +8123,13 @@ free_and_fail:
 #ifdef HTTPS_SUPPORT
   if (0 != (*pflags & MHD_USE_TLS))
   {
-    gnutls_priority_deinit (daemon->priority_cache);
-    if (daemon->x509_cred)
-      gnutls_certificate_free_credentials (daemon->x509_cred);
-    if (daemon->psk_cred)
-      gnutls_psk_free_server_credentials (daemon->psk_cred);
+    gnutls_priority_deinit (daemon->tls_daemonsState.gnutls.priority_cache);
+    if (daemon->tls_daemonsState.gnutls.x509_cred)
+      gnutls_certificate_free_credentials (
+        daemon->tls_daemonsState.gnutls.x509_cred);
+    if (daemon->tls_daemonsState.gnutls.psk_cred)
+      gnutls_psk_free_server_credentials (
+        daemon->tls_daemonsState.gnutls.psk_cred);
   }
 #endif /* HTTPS_SUPPORT */
   if (MHD_ITC_IS_VALID_ (daemon->itc))
@@ -8468,18 +8497,21 @@ MHD_stop_daemon (struct MHD_Daemon *daemon)
 
     /* TLS clean up */
 #ifdef HTTPS_SUPPORT
-    if (daemon->have_dhparams)
+    if (daemon->tls_daemonsState.gnutls.have_dhparams)
     {
-      gnutls_dh_params_deinit (daemon->https_mem_dhparams);
-      daemon->have_dhparams = false;
+      gnutls_dh_params_deinit (
+        daemon->tls_daemonsState.gnutls.https_mem_dhparams);
+      daemon->tls_daemonsState.gnutls.have_dhparams = false;
     }
     if (0 != (daemon->options & MHD_USE_TLS))
     {
-      gnutls_priority_deinit (daemon->priority_cache);
-      if (daemon->x509_cred)
-        gnutls_certificate_free_credentials (daemon->x509_cred);
-      if (daemon->psk_cred)
-        gnutls_psk_free_server_credentials (daemon->psk_cred);
+      gnutls_priority_deinit (daemon->tls_daemonsState.gnutls.priority_cache);
+      if (daemon->tls_daemonsState.gnutls.x509_cred)
+        gnutls_certificate_free_credentials (
+          daemon->tls_daemonsState.gnutls.x509_cred);
+      if (daemon->tls_daemonsState.gnutls.psk_cred)
+        gnutls_psk_free_server_credentials (
+          daemon->tls_daemonsState.gnutls.psk_cred);
     }
 #endif /* HTTPS_SUPPORT */
 
