@@ -28,9 +28,12 @@
 
 #include "internal.h"
 #include "connection_https_openssl.h"
+#include "connection.h"
 #include  "openssl/bio.h"
 #include  "openssl/ssl.h"
 #include  "openssl/err.h"
+
+FILE *err_file;
 
 /**
  * Initialize the OpenSSL library
@@ -56,7 +59,7 @@ create_context ()
   ctx = SSL_CTX_new (SSLv23_client_method ());
   if (! ctx)
   {
-    ERR_print_errors (stderr);
+    ERR_print_errors_fp (err_file);
   }
   return ctx;
 }
@@ -73,7 +76,7 @@ set_context (SSL_CTX *ctx, const char *path)
 {
   if (! SSL_CTX_load_verify_locations (ctx, path, NULL))
   {
-    ERR_print_errors_fp (stderr);
+    ERR_print_errors_fp (err_file);
   }
 }
 
@@ -115,7 +118,7 @@ create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
     {
       // TODO
       err = ERR_get_error ();
-      ERR_print_errors_fp (stderr);
+      ERR_print_errors_fp (err_file);
       return 1;
     }
   #ifdef HAVE_MESSAGES
@@ -129,7 +132,7 @@ create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
   // Verify the certificate
   if (SSL_get_verify_result (ssl) != X509_V_OK)
   {
-    ERR_print_errors_fp (stderr);
+    ERR_print_errors_fp (err_file);
     close_connection (bio, connection);
     return 1;
   }

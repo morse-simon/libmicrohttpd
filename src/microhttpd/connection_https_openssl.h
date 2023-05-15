@@ -27,5 +27,76 @@
 #define CONNECTION_HTTPS_EXT_OPENSSL_H
 
 #include "internal.h"
+/* Not sure about those includes */
+#include  "openssl/bio.h"
+#include  "openssl/ssl.h"
+#include  "openssl/err.h"
+
+#ifdef HTTPS_SUPPORT
+/**
+ * Initialize the OpenSSL library
+*/
+void
+init_openssl ();
+
+/**
+ * create a new SSL_CTX structure
+ *
+ * @return the SSL_CTX structure
+*/
+SSL_CTX *
+create_context ();
+
+/**
+ * set the context of the SSL_CTX structure, especially the path to the trust store file
+ *
+ * @param ctx the SSL_CTX structure
+ * @param path the path and the filename of the trust store file
+*/
+void
+set_context (SSL_CTX *ctx, const char *path);
+
+
+/**
+ * Create a secure connection with the server
+ *
+ * @param bio the BIO structure
+ * @param path the path to the certificate file
+ * @return 1 if an error occured, 0 otherwise
+*/
+int
+create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
+                          struct MHD_Connection *connection);
+
+
+/**
+ * Reset the BIO structure
+ *
+ * @param bio the BIO structure
+ * @return 1 if an error occured, 0 otherwise
+*/
+int
+reset_bio (BIO *bio);
+
+
+/**
+ * Close the connection with the server
+ *
+ * @param bio the BIO structure
+ * @return 1 if an error occured, 0 otherwise
+*/
+int
+close_connection (BIO *bio, struct MHD_Connection *connection);
+
+
+/**
+ * Free memory allocated by OpenSSL when the application is shutting down
+ *
+ * @param ctx the SSL_CTX structure
+*/
+void
+shutting_down (SSL_CTX *ctx);
+
+#endif /* HTTPS_SUPPORT */
 
 #endif
