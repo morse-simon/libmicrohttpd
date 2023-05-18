@@ -41,8 +41,11 @@ FILE *err_file;
 void
 init_openssl ()
 {
-  SSL_load_error_strings ();
+  #if OPENSSL_API_LEVEL < 3000
+  // deprecated since OpenSSL 3.0
   ERR_load_BIO_strings ();
+  #endif
+  SSL_load_error_strings ();
   OpenSSL_add_all_algorithms ();
 }
 
@@ -103,8 +106,8 @@ create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
   BIO_set_conn_hostname (bio, hostnname);
   // Set the BIO in a non blocking mode
   BIO_set_nbio (bio, 1);
-  if ((MHD_TLS_CONN_INIT == connection->tls.openssl.tls_session) ||
-      (MHD_TLS_CONN_HANDSHAKING == connection->tls.openssl.tls_state))
+  if ((1 == SSL_is_init_finished (ssl)) ||
+      (1 == SSL_in_init (ssl)))
   {
     ret = BIO_do_handshake (bio);
     if (1 == ret)
