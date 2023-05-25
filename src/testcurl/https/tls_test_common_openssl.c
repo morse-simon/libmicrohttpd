@@ -525,46 +525,11 @@ teardown_testcase (struct MHD_Daemon *d)
 
 
 unsigned int
-setup_session (gnutls_session_t *session,
-               gnutls_certificate_credentials_t *xcred)
-{
-  if (GNUTLS_E_SUCCESS == gnutls_init (session, GNUTLS_CLIENT))
-  {
-    if (GNUTLS_E_SUCCESS == gnutls_set_default_priority (*session))
-    {
-      if (GNUTLS_E_SUCCESS == gnutls_certificate_allocate_credentials (xcred))
-      {
-        if (GNUTLS_E_SUCCESS == gnutls_credentials_set (*session,
-                                                        GNUTLS_CRD_CERTIFICATE,
-                                                        *xcred))
-        {
-          return 0;
-        }
-        gnutls_certificate_free_credentials (*xcred);
-      }
-    }
-    gnutls_deinit (*session);
-  }
-  return 1;
-}
-
-
-unsigned int
 setup_session_openssl (const char *PATH)
 {
   init_openssl ();
   SSL_CTX *ctx = create_context ();
   set_context (ctx, PATH);
-}
-
-
-unsigned int
-teardown_session (gnutls_session_t session,
-                  gnutls_certificate_credentials_t xcred)
-{
-  gnutls_deinit (session);
-  gnutls_certificate_free_credentials (xcred);
-  return 0;
 }
 
 
