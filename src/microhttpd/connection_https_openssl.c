@@ -33,6 +33,36 @@
 #include  "openssl/ssl.h"
 #include  "openssl/err.h"
 
+
+#if ENABLE_TLS_PLUGINS
+#define PRIVATE_SYMBOL static
+#else
+#define PRIVATE_SYMBOL /* public */
+#endif
+
+
+PRIVATE_SYMBOL
+enum MHD_TlsProtocolVersion
+MHD_TLS_openssl_get_version (struct MHD_Connection *connection)
+{
+  // ...
+}
+
+
+struct TLS_Plugin *
+MHD_TLS_openssl_init (void *ctx)
+{
+#define OPENSSL_API(rval,fname,fargs) \
+  fname = MHD_TLS_openssl_ ## fname
+
+  static struct TLS_Plugin plugin = {
+    TLS_API (OPENSSL_API)
+  };
+#undef OPENSSL_API
+  return &plugin;
+}
+
+
 FILE *err_file;
 
 /**
@@ -92,7 +122,7 @@ set_context (SSL_CTX *ctx, const char *path)
  * @return 1 if an error occured, 0 otherwise
 */
 int
-create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
+create_secure_connection (SSL_CTX *ctx, const char *hostname, const char *port,
                           struct MHD_Connection *connection)
 {
   BIO *bio = BIO_new_ssl_connect (ctx);
@@ -103,7 +133,7 @@ create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
 
   // Prevent some failure when not receiving non-application data
   SSL_set_mode (ssl, SSL_MODE_AUTO_RETRY);
-  BIO_set_conn_hostname (bio, hostnname);
+  BIO_set_conn_hostname (bio, hostname);
   // Set the BIO in a non blocking mode
   BIO_set_nbio (bio, 1);
   if ((1 == SSL_is_init_finished (ssl)) ||

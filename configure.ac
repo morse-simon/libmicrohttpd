@@ -3383,6 +3383,7 @@ AS_CASE(
     ])
     MSG_HTTPS="yes (using libgnutls)"
     AC_DEFINE([[HTTPS_SUPPORT]],[[1]],[Define to 1 if libmicrohttpd is compiled with HTTPS support.])
+    AC_DEFINE([[HTTPS_WITH_GNUTLS]],[[1]],[Define to 1 if libmicrohttpd is compiled with GnuTLS support.])
   ],
   [openssl],[
     AS_IF([[test "x$have_openssl" != "xyes"]],[
@@ -3390,6 +3391,7 @@ AS_CASE(
     ])
     MSG_HTTPS="yes (using openssl)"
     AC_DEFINE([[HTTPS_SUPPORT]],[[1]],[Define to 1 if libmicrohttpd is compiled with HTTPS support.])
+    AC_DEFINE([[HTTPS_WITH_OPENSSL]],[[1]],[Define to 1 if libmicrohttpd is compiled with OpenSSL support.])
   ],
   [mbedtls],[
     AS_IF([[test "x$have_mbedtls" != "xyes"]],[
@@ -3397,6 +3399,7 @@ AS_CASE(
     ])
     MSG_HTTPS="yes (using mbedtls)"
     AC_DEFINE([[HTTPS_SUPPORT]],[[1]],[Define to 1 if libmicrohttpd is compiled with HTTPS support.])
+    AC_DEFINE([[HTTPS_WITH_MBEDTLS]],[[1]],[Define to 1 if libmicrohttpd is compiled with mbedTLS support.])
     AC_MSG_ERROR([[mbedtls support not yet implemented]])
   ],
   [all],[
@@ -3419,8 +3422,10 @@ AS_CASE(
   [AC_MSG_ERROR([Unsupported argument for --enable-https])]
 )
 
-AM_CONDITIONAL([ENABLE_TLS_PLUGINS], [[test "x$enable_tls_plugins" = "x1"]])
-AC_DEFINE([[ENABLE_TLS_PLUGINS]],[[$enable_tls_plugins]],[Define to 1 if we should use TLS plugins.])
+AM_CONDITIONAL([ENABLE_TLS_PLUGINS],
+  [[test "x$enable_tls_plugins" = "x1"]])
+AS_IF([[test "x$enable_tls_plugins" = "x1"]],
+  [AC_DEFINE([[ENABLE_TLS_PLUGINS]],[[1]],[Define to 1 if we should use TLS plugins.])])
 
 
 AC_MSG_CHECKING(whether to support HTTPS)

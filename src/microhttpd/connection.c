@@ -5415,6 +5415,9 @@ MHD_get_connection_info (struct MHD_Connection *connection,
       gnutls_protocol_t res;
       res = gnutls_protocol_get_version (connection->tls.gnutls.tls_session);
       connection->connection_info_dummy.protocol = (int) res;
+
+      // NEW:
+      // connection->connection_info_dummy.protocol = (int) MHD_tls_get_protocol_version (connection);
     }
     return &connection->connection_info_dummy;
   case MHD_CONNECTION_INFO_GNUTLS_SESSION:
