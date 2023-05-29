@@ -6253,6 +6253,16 @@ parse_options_va (struct MHD_Daemon *daemon,
     /* Increase counter at start, so resulting value is number of
      * processed options, including any failed ones. */
     daemon->num_opts++;
+
+    // NOTE: how to handle switch with some TLS and some non-TLS...
+    int mret;
+    mret = MHD_TLS_parse_option (daemon, opt, ap);
+    if (mret == 1)
+      continue;  // this was a TLS option, move on to the next!
+    if (mret == -1)
+      fail;      // this was a TLS option, but we failed to process it
+
+    // Not a TLS option, try non-TLS options here:
     switch (opt)
     {
     case MHD_OPTION_CONNECTION_MEMORY_LIMIT:
