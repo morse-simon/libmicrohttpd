@@ -1205,9 +1205,14 @@ union TLS_ConnectionState
     enum MHD_TLS_CONN_STATE tls_state;
 
     /**
-     * State required for HTTPS/SSL/TLS support.
+     * context of the connection.
      */
-    gnutls_session_t tls_session;
+    SSL_CTX *ctx;
+
+    /**
+     * BIO of the connection.
+    */
+    BIO *bio;
 
   } openssl;
 

@@ -2264,6 +2264,21 @@ enum MHD_ConnectionNotificationCode
 
 } _MHD_FIXED_ENUM;
 
+/**
+ * The list of tls and ssl protocols supported
+ */
+enum MHD_tls_protocol_version
+{
+  KNOWN_BAD = 0,       /**< No TLS */
+  KNOWN_TLS_SSLv3 = 1, /**< GNUTLS_SSL3 */
+  KNOWN_TLS_V1_0 =  2, /**< GNUTLS_TLS1_0 */
+  KNOWN_TLS_V1_1 =  3, /**< GNUTLS_TLS1_1 */
+  KNOWN_TLS_V1_2 =  4, /**< GNUTLS_TLS1_2 */
+  KNOWN_TLS_V1_3 =  5, /**< GNUTLS_TLS1_3 */
+  KNOWN_TLS_MIN = KNOWN_TLS_SSLv3, /**< Minimum valid value */
+  KNOWN_TLS_MAX = KNOWN_TLS_V1_3   /**< Maximum valid value */
+};
+
 
 /**
  * Information about a connection.
@@ -2277,9 +2292,9 @@ union MHD_ConnectionInfo
   int /* enum gnutls_cipher_algorithm */ cipher_algorithm;
 
   /**
-   * Protocol used, of type "enum gnutls_protocol".
+   * Protocol used, of type "enum MHD_tls_protocol_version".
    */
-  int /* enum gnutls_protocol */ protocol;
+  int /* enum MHD_tls_protocol_version*/ protocol;
 
   /**
    * The suspended status of a connection.

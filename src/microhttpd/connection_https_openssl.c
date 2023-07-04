@@ -55,8 +55,8 @@ init_openssl ()
  *
  * @return the SSL_CTX structure
 */
-SSL_CTX *
-create_context ()
+void
+create_context (struct MHD_Connection *connection)
 {
   SSL_CTX *ctx;
   ctx = SSL_CTX_new (SSLv23_client_method ());
@@ -64,7 +64,7 @@ create_context ()
   {
     ERR_print_errors_fp (err_file);
   }
-  return ctx;
+  connection->tls.openssl.ctx = ctx;
 }
 
 
@@ -85,17 +85,16 @@ set_context (SSL_CTX *ctx, const char *path)
 
 
 /**
- * Create a secure connection with the server
+ * Initiat a handshake using openssl
  *
- * @param bio the BIO structure
- * @param path the path to the certificate file
- * @return 1 if an error occured, 0 otherwise
+ * @param connection connection to handshake on
+ * @return false if an error occured, true otherwise
 */
-int
-create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
-                          struct MHD_Connection *connection)
+bool
+MHD_run_tls_handshake_openssl_ (struct MHD_Connection *connection)
 {
-  BIO *bio = BIO_new_ssl_connect (ctx);
+  BIO *bio = connection->tls.openssl.bio;
+  bio = BIO_new_ssl_connect (connection->tls.openssl.ctx);
   SSL *ssl;
   int ret;
   unsigned long err;
@@ -103,7 +102,7 @@ create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
 
   // Prevent some failure when not receiving non-application data
   SSL_set_mode (ssl, SSL_MODE_AUTO_RETRY);
-  BIO_set_conn_hostname (bio, hostnname);
+  BIO_set_conn_hostname (bio, "localhost:8080");
   // Set the BIO in a non blocking mode
   BIO_set_nbio (bio, 1);
   if ((1 == SSL_is_init_finished (ssl)) ||
@@ -114,7 +113,7 @@ create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
     {
       connection->tls.openssl.tls_state = MHD_TLS_CONN_CONNECTED;
       MHD_update_last_activity_ (connection);
-      return 0;
+      return true;
     }
     // In this block, we handle the case where the connection encountered an error
     if (0 >= ret)
@@ -122,7 +121,7 @@ create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
       // TODO
       err = ERR_get_error ();
       ERR_print_errors_fp (err_file);
-      return 1;
+      return false;
     }
   #ifdef HAVE_MESSAGES
     MHD_DLOG (connection->daemon,
@@ -130,50 +129,36 @@ create_secure_connection (SSL_CTX *ctx, const char *hostnname, const char *port,
   #endif
     MHD_connection_close_ (connection,
                            MHD_REQUEST_TERMINATED_WITH_ERROR);
-    return 1;
+    return false;
   }
   // Verify the certificate
   if (SSL_get_verify_result (ssl) != X509_V_OK)
   {
     ERR_print_errors_fp (err_file);
-    close_connection (bio, connection);
-    return 1;
+    close_connection (connection);
+    return false;
   }
-
-  return 0;
-}
-
-
-/**
- * Reset the BIO structure
- *
- * @param bio the BIO structure
- * @return 1 if an error occured, 0 otherwise
-*/
-int
-reset_bio (BIO *bio)
-{
-  return ! BIO_reset (bio);
+  return true;
 }
 
 
 /**
  * Close the connection with the server
  *
- * @param bio the BIO structure
- * @return 1 if an error occured, 0 otherwise
+ * @param connection to use
+ * @return flase if an error occured, true otherwise
 */
-int
-close_connection (BIO *bio, struct MHD_Connection *connection)
+bool
+MHD_tls_connection_shutdown_openssl_ (struct MHD_Connection *connection)
 {
   if (MHD_TLS_CONN_WR_CLOSED > connection->tls.openssl.tls_state)
   {
     // The BIO can not be reused
-    const int res = BIO_free (bio);
+    const int res = BIO_free (connection->tls.openssl.bio);
     if (1 == res)
     {
       connection->tls.openssl.tls_state = MHD_TLS_CONN_WR_CLOSED;
-      return 0;
+      return true;
     }
     // In this block, we handle the case where the connection closing encountered an error
     if (0 == res)
@@ -181,7 +166,7 @@ close_connection (BIO *bio, struct MHD_Connection *connection)
       // TODO
     }
   }
-
+  return false;
 }
 
 
@@ -191,9 +176,9 @@ close_connection (BIO *bio, struct MHD_Connection *connection)
  * @param ctx the SSL_CTX structure
 */
 void
-shutting_down (SSL_CTX *ctx)
+shutting_down (struct MHD_Connection *connection)
 {
-  SSL_CTX_free (ctx);
+  SSL_CTX_free (connection->tls.openssl.ctx);
   // Free the error strings for libcrypto and libssl
   ERR_free_strings ();
   // Cleanup all the ciphers and digests

@@ -109,6 +109,36 @@ const long libcurl_tls_max_vers_map[KNOW_TLS_IDS_COUNT]  = {
 };
 #endif /* CURL_AT_LEAST_VERSION(7,54,0) */
 
+
+/**
+ *
+*/
+enum MHD_tls_protocol_version
+MHD_version_gnutls_transcription (gnutls_protocol_t protocol_version)
+{
+  switch (protocol_version)
+  {
+  case 1:
+  case 2:
+  case 3:
+  case 4:
+  case 5:
+    return (enum MHD_tls_protocol_version) protocol_version;
+  case 200:
+    // TODO
+    break;
+  case 201:
+    // TODO
+    break;
+  case 202:
+    // TODO
+    break;
+  case 0xffff:
+    return 0;
+  }
+};
+
+
 /*
  * test HTTPS transfer
  */
