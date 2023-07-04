@@ -33,6 +33,36 @@
 #include  "openssl/ssl.h"
 #include  "openssl/err.h"
 
+
+#if ENABLE_TLS_PLUGINS
+#define PRIVATE_SYMBOL static
+#else
+#define PRIVATE_SYMBOL /* public */
+#endif
+
+
+PRIVATE_SYMBOL
+enum MHD_TlsProtocolVersion
+MHD_TLS_openssl_get_version (struct MHD_Connection *connection)
+{
+  // ...
+}
+
+
+struct TLS_Plugin *
+MHD_TLS_openssl_init (void *ctx)
+{
+#define OPENSSL_API(rval,fname,fargs) \
+  fname = MHD_TLS_openssl_ ## fname
+
+  static struct TLS_Plugin plugin = {
+    TLS_API (OPENSSL_API)
+  };
+#undef OPENSSL_API
+  return &plugin;
+}
+
+
 FILE *err_file;
 
 /**

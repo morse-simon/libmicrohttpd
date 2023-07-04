@@ -1597,11 +1597,20 @@ connection_shrink_read_buffer (struct MHD_Connection *connection)
   }
 
   mhd_assert (c->read_buffer_offset <= c->read_buffer_size);
-  new_buf = MHD_pool_reallocate (c->pool, c->read_buffer, c->read_buffer_size,
-                                 c->read_buffer_offset);
-  mhd_assert (c->read_buffer == new_buf);
-  c->read_buffer = new_buf;
-  c->read_buffer_size = c->read_buffer_offset;
+  if (0 == c->read_buffer_offset)
+  {
+    MHD_pool_deallocate (c->pool, c->read_buffer, c->read_buffer_size);
+    c->read_buffer = NULL;
+    c->read_buffer_size = 0;
+  }
+  else
+  {
+    new_buf = MHD_pool_reallocate (c->pool, c->read_buffer, c->read_buffer_size,
+                                   c->read_buffer_offset);
+    mhd_assert (c->read_buffer == new_buf);
+    c->read_buffer = new_buf;
+    c->read_buffer_size = c->read_buffer_offset;
+  }
 }
 
 
@@ -2424,10 +2433,10 @@ transmit_error_response_len (struct MHD_Connection *connection,
   {
     /* Read buffer is not needed anymore, discard it
      * to free some space for error response. */
-    connection->read_buffer = MHD_pool_reallocate (connection->pool,
-                                                   connection->read_buffer,
-                                                   connection->read_buffer_size,
-                                                   0);
+    MHD_pool_deallocate (connection->pool,
+                         connection->read_buffer,
+                         connection->read_buffer_size);
+    connection->read_buffer = NULL;
     connection->read_buffer_size = 0;
     connection->read_buffer_offset = 0;
   }
@@ -5121,6 +5130,7 @@ MHD_connection_handle_idle (struct MHD_Connection *connection)
           continue;
         }
         /* Response is not required anymore for this connection. */
+        if (1)
         {
           struct MHD_Response *const resp = connection->rp.response;
 
@@ -5405,6 +5415,9 @@ MHD_get_connection_info (struct MHD_Connection *connection,
       gnutls_protocol_t res;
       res = gnutls_protocol_get_version (connection->tls.gnutls.tls_session);
       connection->connection_info_dummy.protocol = (int) res;
+
+      // NEW:
+      // connection->connection_info_dummy.protocol = (int) MHD_tls_get_protocol_version (connection);
     }
     return &connection->connection_info_dummy;
   case MHD_CONNECTION_INFO_GNUTLS_SESSION:

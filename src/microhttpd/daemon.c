@@ -47,11 +47,11 @@
 #include "mhd_align.h"
 #include "mhd_str.h"
 
-#ifdef HAVE_SEARCH_H
+#ifdef MHD_USE_SYS_TSEARCH
 #include <search.h>
-#else
+#else  /* ! MHD_USE_SYS_TSEARCH */
 #include "tsearch.h"
-#endif
+#endif /* ! MHD_USE_SYS_TSEARCH */
 
 #ifdef HTTPS_SUPPORT
 #include "connection_https.h"
@@ -483,10 +483,11 @@ MHD_ip_limit_del (struct MHD_Daemon *daemon,
     tdelete (found_key,
              &daemon->per_ip_connection_count,
              &MHD_ip_addr_compare);
+    MHD_ip_count_unlock (daemon);
     free (found_key);
   }
-
-  MHD_ip_count_unlock (daemon);
+  else
+    MHD_ip_count_unlock (daemon);
 }
 
 
@@ -1519,6 +1520,8 @@ process_urh (struct MHD_UpgradeResponseHandle *urh)
     data_size = urh->out_buffer_used;
     if (data_size > SSIZE_MAX)
       data_size = SSIZE_MAX;
+
+    // res = MHD_TLS_record_send (connection, urh->out_buffer, data_size);
 
     res = gnutls_record_send (connection->tls.gnutls.tls_session,
                               urh->out_buffer,
@@ -6250,6 +6253,16 @@ parse_options_va (struct MHD_Daemon *daemon,
     /* Increase counter at start, so resulting value is number of
      * processed options, including any failed ones. */
     daemon->num_opts++;
+
+    // NOTE: how to handle switch with some TLS and some non-TLS...
+    int mret;
+    mret = MHD_TLS_parse_option (daemon, opt, ap);
+    if (mret == 1)
+      continue;  // this was a TLS option, move on to the next!
+    if (mret == -1)
+      fail;      // this was a TLS option, but we failed to process it
+
+    // Not a TLS option, try non-TLS options here:
     switch (opt)
     {
     case MHD_OPTION_CONNECTION_MEMORY_LIMIT:

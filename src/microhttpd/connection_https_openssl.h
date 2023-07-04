@@ -18,15 +18,31 @@
 */
 
 /**
- * @file connection_https.h
+ * @file connection_https_openssl.h
  * @brief  Methods for managing connections
  * @author Edouard LEFIZELIER
  */
-
-#ifndef CONNECTION_HTTPS_EXT_OPENSSL_H
-#define CONNECTION_HTTPS_EXT_OPENSSL_H
+#ifndef CONNECTION_HTTPS_OPENSSL_H
+#define CONNECTION_HTTPS_OPENSSL_H
 
 #include "internal.h"
+#include "tls_plugin.h"
+
+#if ENABLE_TLS_PLUGINS
+
+struct TLS_Plugin *
+MHD_TLS_openssl_init (void *ctx);
+
+#else
+
+#define OPENSSL_API(rval,fname,...) \
+  rval MHD_TLS_openssl_ ## fname (__VA_ARGS__)
+TLS_API (OPENSSL_API)
+#undef OPENSSL_API
+
+#endif
+
+
 /* Not sure about those includes */
 #include  "openssl/bio.h"
 #include  "openssl/ssl.h"

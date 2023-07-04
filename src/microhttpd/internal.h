@@ -33,6 +33,7 @@
 #include "platform.h"
 #include "microhttpd.h"
 #include "mhd_assert.h"
+#include "tls_plugin.h"
 
 #ifdef HTTPS_SUPPORT
 #include <gnutls/gnutls.h>
@@ -1945,6 +1946,7 @@ struct MHD_Daemon
 
 #ifdef UPGRADE_SUPPORT
 #ifdef HTTPS_SUPPORT
+
   /**
    * File descriptor associated with the #run_epoll_for_upgrade() loop.
    * Only available if #MHD_USE_HTTPS_EPOLL_UPGRADE is set.
@@ -2281,6 +2283,13 @@ struct MHD_Daemon
 #endif /* UPGRADE_SUPPORT */
 
   union TLS_DaemonState tls_daemonsState;
+
+#if ENABLE_TLS_PLUGINS
+  /**
+   * TLS plugin to use.
+   */
+  struct TLS_Plugin *tls_plugin;
+#endif
 
 #endif /* HTTPS_SUPPORT */
 

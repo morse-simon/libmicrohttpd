@@ -18,12 +18,10 @@
 */
 
 /**
- * @file microhttpd/md5_ext.h
+ * @file microhttpd/md5_ext.c
  * @brief  Wrapper for MD5 calculation performed by TLS library
  * @author Karlson2k (Evgeny Grin)
  */
-
-#include <gnutls/crypto.h>
 #include "md5_ext.h"
 #include "mhd_assert.h"
 
@@ -39,14 +37,21 @@ void
 MHD_MD5_init_one_time (struct Md5CtxExt *ctx)
 {
   ctx->handle = NULL;
-  ctx->ext_error = gnutls_hash_init (&ctx->handle, GNUTLS_DIG_MD5);
+  ctx->ext_error = gnutls_hash_init (&ctx->handle,
+                                     GNUTLS_DIG_MD5);
   if ((0 != ctx->ext_error) && (NULL != ctx->handle))
   {
+    /* GnuTLS may return initialisation error and set the handle at the
+       same time. Such handle cannot be used for calculations.
+       Note: GnuTLS may also return an error and NOT set the handle. */
     gnutls_free (ctx->handle);
     ctx->handle = NULL;
   }
-  else
-    mhd_assert (NULL != ctx->handle);
+
+  /* If handle is NULL, the error must be set */
+  mhd_assert ((NULL != ctx->handle) || (0 != ctx->ext_error));
+  /* If error is set, the handle must be NULL */
+  mhd_assert ((0 == ctx->ext_error) || (NULL == ctx->handle));
 }
 
 

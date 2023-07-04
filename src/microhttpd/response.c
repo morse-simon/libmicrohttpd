@@ -1942,22 +1942,14 @@ MHD_response_execute_upgrade_ (struct MHD_Response *response,
                MHD_thread_ID_match_current_ (connection->pid) );
 #endif /* MHD_USE_THREADS */
 
-  if (0 == (daemon->options & MHD_ALLOW_UPGRADE))
-    return MHD_NO;
-
-  if (NULL ==
-      MHD_get_response_element_n_ (response, MHD_HEADER_KIND,
-                                   MHD_HTTP_HEADER_UPGRADE,
-                                   MHD_STATICSTR_LEN_ ( \
-                                     MHD_HTTP_HEADER_UPGRADE)))
-  {
-#ifdef HAVE_MESSAGES
-    MHD_DLOG (daemon,
-              _ ("Invalid response for upgrade: " \
-                 "application failed to set the 'Upgrade' header!\n"));
-#endif
-    return MHD_NO;
-  }
+  /* "Upgrade" responses accepted only if MHD_ALLOW_UPGRADE is enabled */
+  mhd_assert (0 != (daemon->options & MHD_ALLOW_UPGRADE));
+  /* The header was checked when response queued */
+  mhd_assert (NULL != \
+              MHD_get_response_element_n_ (response, MHD_HEADER_KIND,
+                                           MHD_HTTP_HEADER_UPGRADE,
+                                           MHD_STATICSTR_LEN_ ( \
+                                             MHD_HTTP_HEADER_UPGRADE)));
 
   urh = MHD_calloc_ (1, sizeof (struct MHD_UpgradeResponseHandle));
   if (NULL == urh)
@@ -1970,9 +1962,6 @@ MHD_response_execute_upgrade_ (struct MHD_Response *response,
 #ifdef HTTPS_SUPPORT
   if (0 != (daemon->options & MHD_USE_TLS) )
   {
-    struct MemoryPool *pool;
-    size_t avail;
-    char *buf;
     MHD_socket sv[2];
 #if defined(MHD_socket_nosignal_) || ! defined(MHD_socket_pair_nblk_)
     int res1;
@@ -2051,30 +2040,6 @@ MHD_response_execute_upgrade_ (struct MHD_Response *response,
     urh->mhd.socket = sv[1];
     urh->mhd.urh = urh;
     urh->mhd.celi = MHD_EPOLL_STATE_UNREADY;
-    pool = connection->pool;
-    avail = MHD_pool_get_free (pool);
-    if (avail < RESERVE_EBUF_SIZE)
-    {
-      /* connection's pool is totally at the limit,
-         use our 'emergency' buffer of #RESERVE_EBUF_SIZE bytes. */
-      avail = RESERVE_EBUF_SIZE;
-      buf = urh->e_buf;
-    }
-    else
-    {
-      /* Normal case: grab all remaining memory from the
-         connection's pool for the IO buffers; the connection
-         certainly won't need it anymore as we've upgraded
-         to another protocol. */
-      buf = MHD_pool_allocate (pool,
-                               avail,
-                               false);
-    }
-    /* use half the buffer for inbound, half for outbound */
-    urh->in_buffer_size = avail / 2;
-    urh->out_buffer_size = avail - urh->in_buffer_size;
-    urh->in_buffer = buf;
-    urh->out_buffer = &buf[urh->in_buffer_size];
 #ifdef EPOLL_SUPPORT
     /* Launch IO processing by the event loop */
     if (0 != (daemon->options & MHD_USE_EPOLL))
@@ -2175,6 +2140,61 @@ MHD_response_execute_upgrade_ (struct MHD_Response *response,
                              connection->socket_fd,
 #endif /* ! HTTPS_SUPPORT */
                              urh);
+
+#ifdef HTTPS_SUPPORT
+  if (0 != (daemon->options & MHD_USE_TLS))
+  {
+    struct MemoryPool *const pool = connection->pool;
+    size_t avail;
+    char *buf;
+
+    /* All data should be sent already */
+    mhd_assert (connection->write_buffer_send_offset == \
+                connection->write_buffer_append_offset);
+    MHD_pool_deallocate (pool, connection->write_buffer,
+                         connection->write_buffer_size);
+    connection->write_buffer_append_offset = 0;
+    connection->write_buffer_send_offset = 0;
+    connection->write_buffer_size = 0;
+    connection->write_buffer = NULL;
+
+    /* Extra read data should be processed already by the application */
+    MHD_pool_deallocate (pool, connection->read_buffer,
+                         connection->read_buffer_size);
+    connection->read_buffer_offset = 0;
+    connection->read_buffer_size = 0;
+    connection->read_buffer = NULL;
+
+    avail = MHD_pool_get_free (pool);
+    if (avail < RESERVE_EBUF_SIZE)
+    {
+      /* connection's pool is totally at the limit,
+         use our 'emergency' buffer of #RESERVE_EBUF_SIZE bytes. */
+      avail = RESERVE_EBUF_SIZE;
+      buf = urh->e_buf;
+#ifdef HAVE_MESSAGES
+      MHD_DLOG (daemon,
+                _ ("Memory shortage in connection's memory pool. " \
+                   "The \"upgraded\" communication will be inefficient.\n"));
+#endif
+    }
+    else
+    {
+      /* Normal case: grab all remaining memory from the
+         connection's pool for the IO buffers; the connection
+         certainly won't need it anymore as we've upgraded
+         to another protocol. */
+      buf = MHD_pool_allocate (pool,
+                               avail,
+                               false);
+    }
+    /* use half the buffer for inbound, half for outbound */
+    urh->in_buffer_size = avail / 2;
+    urh->out_buffer_size = avail - urh->in_buffer_size;
+    urh->in_buffer = buf;
+    urh->out_buffer = buf + urh->in_buffer_size;
+  }
+#endif /* HTTPS_SUPPORT */
   return MHD_YES;
 }
 
