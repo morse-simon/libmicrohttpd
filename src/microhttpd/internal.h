@@ -1200,6 +1200,11 @@ union TLS_ConnectionState
   struct
   {
     /**
+     * State required for HTTPS/SSL/TLS support.
+     */
+    SSL *ssl;
+
+    /**
      * State of connection's TLS layer
      * To modify
      */

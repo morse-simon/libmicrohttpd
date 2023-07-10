@@ -66,6 +66,33 @@ MHD_TLS_openssl_init (void *ctx)
 FILE *err_file;
 
 /**
+ * Callback for receiving data from the socket.
+ *
+ * @param connection the MHD_Connection structure
+ * @param other where to write received data to
+ * @param i maximum size of other (in bytes)
+ * @return positive value for number of bytes actually received or
+ *         negative value for error number MHD_ERR_xxx_
+ */
+static ssize_t
+recv_tls_adapter_openssl_ (struct MHD_Connection *connection,
+                           void *other,
+                           size_t i)
+{
+  ssize_t res;
+
+  if (i > SSIZE_MAX)
+    i = SSIZE_MAX;
+
+  res = SSL_read (connection->tls.openssl.ssl,
+                  other,
+                  i);
+  // TODO error handling
+  return res
+}
+
+
+/**
  * Initialize the OpenSSL library
 */
 void
@@ -169,6 +196,19 @@ MHD_run_tls_handshake_openssl_ (struct MHD_Connection *connection)
     return false;
   }
   return true;
+}
+
+
+/**
+ * Set connection callback function to be used through out
+ * the processing of this secure connection.
+ *
+ * @param connection which callbacks should be modified
+ */
+void
+MHD_set_https_callbacks_openssl_ (struct MHD_Connection *connection)
+{
+  connection->recv_cls = &recv_tls_adapter_openssl_;
 }
 
 
