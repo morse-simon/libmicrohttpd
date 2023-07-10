@@ -156,14 +156,15 @@ MHD_run_tls_handshake_openssl_ (struct MHD_Connection *connection)
   int ret;
   unsigned long err;
   BIO_get_ssl (bio, &ssl);
+  connection->tls.openssl.ssl = ssl;
 
   // Prevent some failure when not receiving non-application data
-  SSL_set_mode (ssl, SSL_MODE_AUTO_RETRY);
+  SSL_set_mode (connection->tls.openssl.ssl, SSL_MODE_AUTO_RETRY);
   BIO_set_conn_hostname (bio, "localhost:8080");
   // Set the BIO in a non blocking mode
   BIO_set_nbio (bio, 1);
-  if ((1 == SSL_is_init_finished (ssl)) ||
-      (1 == SSL_in_init (ssl)))
+  if ((1 == SSL_is_init_finished (connection->tls.openssl.ssl)) ||
+      (1 == SSL_in_init (connection->tls.openssl.ssl)))
   {
     ret = BIO_do_handshake (bio);
     if (1 == ret)
@@ -189,7 +190,7 @@ MHD_run_tls_handshake_openssl_ (struct MHD_Connection *connection)
     return false;
   }
   // Verify the certificate
-  if (SSL_get_verify_result (ssl) != X509_V_OK)
+  if (SSL_get_verify_result (connection->tls.openssl.ssl) != X509_V_OK)
   {
     ERR_print_errors_fp (err_file);
     close_connection (connection);
