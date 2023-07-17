@@ -37,6 +37,19 @@
 #include <gnutls/gnutls.h>
 #include "mhd_send.h"
 
+struct TLS_Plugin *
+MHD_TLS_gnutls_init (void *ctx)
+{
+#define GNUTLS_API(rval,fname,fargs) \
+  fname = MHD_TLS_openssl_ ## fname
+
+  static struct TLS_Plugin plugin = {
+    TLS_API (GNUTLS_API)
+  };
+#undef GNUTLS_API
+  return &plugin;
+}
+
 
 /**
  * Callback for receiving data from the socket.
