@@ -6,21 +6,23 @@
  * @author response-options-generator.c
  */
 
-/* EDITED MANUALLY */
-
-
 #include "mhd_sys_options.h"
 #include "sys_base_types.h"
+#include "sys_malloc.h"
+#include <string.h>
+#include "mhd_daemon.h"
 #include "mhd_response.h"
 #include "response_options.h"
 #include "mhd_public_api.h"
 
-
-MHD_FN_PAR_NONNULL_ALL_ MHD_EXTERN_ enum MHD_StatusCode
-MHD_response_set_options (struct MHD_Response *response,
-                          const struct MHD_ResponseOptionAndValue *options,
-                          size_t options_max_num)
+MHD_FN_PAR_NONNULL_ALL_ MHD_EXTERN_
+enum MHD_StatusCode
+MHD_response_set_options (
+  struct MHD_Response *response,
+  const struct MHD_ResponseOptionAndValue *options,
+  size_t options_max_num)
 {
+  struct ResponseOptions *const settings = response->settings;
   size_t i;
 
   if (response->frozen)
@@ -33,32 +35,31 @@ MHD_response_set_options (struct MHD_Response *response,
     case MHD_R_O_END:
       return MHD_SC_OK;
     case MHD_R_O_REUSABLE:
-      response->settings.reusable = option->val.reusable;
+      settings->reusable = option->val.reusable;
       continue;
     case MHD_R_O_HEAD_ONLY_RESPONSE:
-      response->settings.head_only_response = option->val.head_only_response;
+      settings->head_only_response = option->val.head_only_response;
       continue;
     case MHD_R_O_CHUNKED_ENC:
-      response->settings.chunked_enc = option->val.chunked_enc;
+      settings->chunked_enc = option->val.chunked_enc;
       continue;
     case MHD_R_O_CONN_CLOSE:
-      response->settings.conn_close = option->val.conn_close;
+      settings->conn_close = option->val.conn_close;
       continue;
     case MHD_R_O_HTTP_1_0_COMPATIBLE_STRICT:
-      response->settings.http_1_0_compatible_strict = option->val.http_1_0_compatible_strict;
+      settings->http_1_0_compatible_strict = option->val.http_1_0_compatible_strict;
       continue;
     case MHD_R_O_HTTP_1_0_SERVER:
-      response->settings.http_1_0_server = option->val.http_1_0_server;
+      settings->http_1_0_server = option->val.http_1_0_server;
       continue;
     case MHD_R_O_INSANITY_HEADER_CONTENT_LENGTH:
-      response->settings.insanity_header_content_length = option->val.insanity_header_content_length;
+      settings->insanity_header_content_length = option->val.insanity_header_content_length;
       continue;
     case MHD_R_O_TERMINATION_CALLBACK:
-      response->settings.termination_callback.v_term_cb = option->val.termination_callback.v_term_cb;
-      response->settings.termination_callback.v_term_cb_cls = option->val.termination_callback.v_term_cb_cls;
+      settings->termination_callback.v_term_cb = option->val.termination_callback.v_term_cb;
+      settings->termination_callback.v_term_cb_cls = option->val.termination_callback.v_term_cb_cls;
       continue;
     case MHD_R_O_SENTINEL:
-    default:
       break;
     }
     return MHD_SC_OPTION_UNKNOWN;
