@@ -10,7 +10,6 @@
 #include "sys_base_types.h"
 #include "sys_malloc.h"
 #include <string.h>
-#include "mhd_daemon.h"
 #include "mhd_response.h"
 #include "response_options.h"
 #include "mhd_public_api.h"
