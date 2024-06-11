@@ -21,16 +21,17 @@ MHD_response_set_options (
   const struct MHD_ResponseOptionAndValue *options,
   size_t options_max_num)
 {
-  struct ResponseOptions *const settings = response->settings;
+  struct ResponseOptions *const settings = response->psettings;
   size_t i;
 
-  if (response->frozen)
+  if (NULL == settings)
     return MHD_SC_TOO_LATE;
 
-  for (i=0;i<options_max_num;i++)
+  for (i = 0; i < options_max_num; i++)
   {
-    const struct MHD_ResponseOptionAndValue *const option = options + i;
-    switch (option->opt) {
+    const struct MHD_responseOptionAndValue *const option = options + i;
+    switch (option->opt)
+    {
     case MHD_R_O_END:
       return MHD_SC_OK;
     case MHD_R_O_REUSABLE:
@@ -59,6 +60,7 @@ MHD_response_set_options (
       settings->termination_callback.v_term_cb_cls = option->val.termination_callback.v_term_cb_cls;
       continue;
     case MHD_R_O_SENTINEL:
+    default: /* for -WFIXME_EG */ 
       break;
     }
     return MHD_SC_OPTION_UNKNOWN;
