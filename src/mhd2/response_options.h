@@ -2,12 +2,12 @@
    Do not edit directly! */
 /* *INDENT-OFF* */
 /**
-/* @file response_options.h
-/* @author response-options-generator.c
+ * @file response_options.h
+ * @author response-options-generator.c
  */
 
 #ifndef MHD_RESPONSE_OPTIONS_H
-#define MHD_RESPONSE_OTPIONS_H 1
+#define MHD_RESPONSE_OPTIONS_H 1
 
 #include "mhd_sys_options.h"
 #include "mhd_public_api.h"
