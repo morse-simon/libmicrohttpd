@@ -1447,6 +1447,36 @@ parse_post_mpart (struct MHD_Connection *restrict c,
       mhd_assert (mhd_POST_INVALID_POS == mf->line_start);
       do /* Fast local loop */
       {
+#ifndef MHD_FAVOR_SMALL_CODE
+        const char *lf_ptr;
+        size_t lf_pos;
+
+        lf_ptr = memchr (buf + i, '\n', *pdata_size - i);
+        if (NULL == lf_ptr)
+        {
+          if ('\r' == buf[*pdata_size - 1])
+            mf->st = mhd_POST_MPART_ST_PREAMBL_CR_FOUND;
+          i = *pdata_size;
+          break;
+        }
+        lf_pos = (size_t) (lf_ptr - buf);
+        mhd_assert (i <= lf_pos);
+        mhd_assert (*pdata_size > i);
+        if (bare_lf_as_crlf)
+        {
+          i = lf_pos + 1;
+          mf->st = mhd_POST_MPART_ST_PREAMBL_LINE_START;
+          break;
+        }
+        else if ((i < lf_pos) &&
+                 ('\r' == buf[lf_pos - 1]))
+        {
+          i = lf_pos + 1;
+          mf->st = mhd_POST_MPART_ST_PREAMBL_LINE_START;
+          break;
+        }
+        i = lf_pos;
+#else  /* MHD_FAVOR_SMALL_CODE */
         if ('\r' == buf[i])
         {
           mf->st = mhd_POST_MPART_ST_PREAMBL_CR_FOUND;
@@ -1459,6 +1489,7 @@ parse_post_mpart (struct MHD_Connection *restrict c,
           ++i; /* Go to the next char */
           break;
         }
+#endif /* MHD_FAVOR_SMALL_CODE */
       } while (*pdata_size > ++i);
       mhd_assert ((*pdata_size == i) || \
                   (mhd_POST_MPART_ST_PREAMBL_CR_FOUND == mf->st) || \
@@ -1485,6 +1516,21 @@ parse_post_mpart (struct MHD_Connection *restrict c,
       mhd_assert (mhd_POST_INVALID_POS == mf->delim_check_start);
       mhd_assert (mhd_POST_INVALID_POS == mf->line_start);
       mf->line_start = i;
+#ifndef MHD_FAVOR_SMALL_CODE
+      if (*pdata_size - i >= mf->bound.size + 2)
+      {
+        if (('-' == buf[i]) &&
+            ('-' == buf[i + 1]) &&
+            (0 == memcmp (buf + i + 2, mf->bound.data, mf->bound.size)))
+        {
+          mf->st = mhd_POST_MPART_ST_FIRST_DELIM_FOUND;
+          i += 2 + mf->bound.size + 1;
+        }
+        else
+          mf->st = mhd_POST_MPART_ST_BACK_TO_PREAMBL;
+        continue;
+      }
+#endif /* ! MHD_FAVOR_SMALL_CODE */
       mf->st = mhd_POST_MPART_ST_PREAMBL_CHECKING_FOR_DELIM;
     /* Intentional fall-through */
     case mhd_POST_MPART_ST_PREAMBL_CHECKING_FOR_DELIM:
@@ -1859,6 +1905,38 @@ parse_post_mpart (struct MHD_Connection *restrict c,
       mhd_assert (mhd_POST_INVALID_POS != p_data->field_start);
       do /* Fast local loop */
       {
+#ifndef MHD_FAVOR_SMALL_CODE
+        const char *lf_ptr;
+        size_t lf_pos;
+
+        lf_ptr = memchr (buf + i, '\n', *pdata_size - i);
+        if (NULL == lf_ptr)
+        {
+          if ('\r' == buf[*pdata_size - 1])
+            mf->st = mhd_POST_MPART_ST_VALUE_CR_FOUND;
+          i = *pdata_size;
+          break;
+        }
+        lf_pos = (size_t) (lf_ptr - buf);
+        mhd_assert (i <= lf_pos);
+        mhd_assert (*pdata_size > i);
+        if ((i < lf_pos) &&
+            ('\r' == buf[lf_pos - 1]))
+        {
+          mf->delim_check_start = lf_pos - 1;
+          mf->st = mhd_POST_MPART_ST_VALUE_LINE_START;
+          i = lf_pos + 1;
+          break;
+        }
+        else if (bare_lf_as_crlf)
+        {
+          mf->delim_check_start = lf_pos;
+          mf->st = mhd_POST_MPART_ST_VALUE_LINE_START;
+          i = lf_pos + 1;
+          break;
+        }
+        i = lf_pos;
+#else  /* MHD_FAVOR_SMALL_CODE */
         if ('\r' == buf[i])
         {
           mf->delim_check_start = i;
@@ -1873,6 +1951,7 @@ parse_post_mpart (struct MHD_Connection *restrict c,
           ++i;
           break;
         }
+#endif /* MHD_FAVOR_SMALL_CODE */
       } while (*pdata_size > ++i);
       mhd_assert ((*pdata_size == i) || \
                   (mhd_POST_MPART_ST_VALUE_CR_FOUND == mf->st) || \
@@ -1891,6 +1970,21 @@ parse_post_mpart (struct MHD_Connection *restrict c,
       mhd_assert (mhd_POST_INVALID_POS != mf->delim_check_start);
       mhd_assert (mhd_POST_INVALID_POS != p_data->field_start);
       mf->line_start = i;
+#ifndef MHD_FAVOR_SMALL_CODE
+      if (*pdata_size - i >= mf->bound.size + 2)
+      {
+        if (('-' == buf[i]) &&
+            ('-' == buf[i + 1]) &&
+            (0 == memcmp (buf + i + 2, mf->bound.data, mf->bound.size)))
+        {
+          mf->st = mhd_POST_MPART_ST_DELIM_FOUND;
+          i += 2 + mf->bound.size;
+        }
+        else
+          mf->st = mhd_POST_MPART_ST_BACK_TO_VALUE;
+        continue;
+      }
+#endif /* ! MHD_FAVOR_SMALL_CODE */
       mf->st = mhd_POST_MPART_ST_VALUE_CHECKING_FOR_DELIM;
     /* Intentional fall-through */
     case mhd_POST_MPART_ST_VALUE_CHECKING_FOR_DELIM:
