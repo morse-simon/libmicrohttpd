@@ -1906,6 +1906,7 @@ parse_post_mpart (struct MHD_Connection *restrict c,
       do /* Fast local loop */
       {
 #ifndef MHD_FAVOR_SMALL_CODE
+        // TODO: store boundary string with "\r\n--" prefix and use memmem (if available) */
         const char *lf_ptr;
         size_t lf_pos;
 
